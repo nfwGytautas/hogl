@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\dev\hogl\hogl-c\hogl\CMakeFiles\564881574ebc21652f025bafad8c2486\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{40E00354-04C0-3D80-90BB-2CF4E8AD6F05}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
