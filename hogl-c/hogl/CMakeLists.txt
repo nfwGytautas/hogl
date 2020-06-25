@@ -23,7 +23,7 @@ include_directories(${CMAKE_SOURCE_DIR}/lib/)
 link_directories(${CMAKE_SOURCE_DIR}/lib/)
 
 # Defines
-add_compile_definitions(HOGL_VS)
+#add_compile_definitions(HOGL_VS)
 
 # Executable
 file(GLOB SOURCE_FILES ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.h)

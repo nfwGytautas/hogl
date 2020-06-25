@@ -28,6 +28,8 @@ fn main() {
         // The input header we would like to generate
         // bindings for.
         .header("../hogl-c/hogl/src/hogl.h")
+        // Rust enums
+        .rustified_enum("hogl_.*")
         // Generate comments
         .generate_comments(true)
         // Finish the builder and generate the bindings.

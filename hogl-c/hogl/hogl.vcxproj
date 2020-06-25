@@ -95,11 +95,11 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;HOGL_VS;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;HOGL_VS;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\dev\hogl\hogl-c\hogl\src;C:\dev\hogl\hogl-c\hogl\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
@@ -111,7 +111,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreBuildEvent>
-      <Message>	</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/lib/Glad.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -132,7 +133,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/out/lib/Debug/hogl.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -160,13 +162,13 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\dev\hogl\hogl-c\hogl\src;C:\dev\hogl\hogl-c\hogl\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
@@ -178,7 +180,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreBuildEvent>
-      <Message>	</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/lib/Glad.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -199,7 +202,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/out/lib/Release/hogl.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -227,13 +231,13 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\dev\hogl\hogl-c\hogl\src;C:\dev\hogl\hogl-c\hogl\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
@@ -245,7 +249,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreBuildEvent>
-      <Message>	</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/lib/Glad.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -266,7 +271,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/out/lib/MinSizeRel/hogl.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -295,11 +301,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <UseFullPaths>false</UseFullPaths>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;HOGL_VS;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>C:\dev\hogl\hogl-c\hogl\src;C:\dev\hogl\hogl-c\hogl\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
@@ -311,7 +317,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PreBuildEvent>
-      <Message>	</Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/lib/Glad.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -332,7 +339,8 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/hogl-c/hogl/out/lib/RelWithDebInfo/hogl.lib C:/dev/hogl/hogl-c/hogl/../../build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -404,9 +412,15 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\dev\hogl\hogl-c\hogl\src\hogl-r.h" />
-    <ClCompile Include="C:\dev\hogl\hogl-c\hogl\src\hogl.cpp" />
+    <ClCompile Include="src\hogl_context.cpp" />
+    <ClCompile Include="src\hogl_input.cpp" />
+    <ClCompile Include="src\hogl_wnd.cpp" />
     <ClInclude Include="C:\dev\hogl\hogl-c\hogl\src\hogl.h" />
+    <ClInclude Include="C:\dev\hogl\hogl-c\hogl\src\hogl_types.h" />
+    <ClInclude Include="src\hogl_context.h" />
+    <ClInclude Include="src\hogl_cpp_types.h" />
+    <ClInclude Include="src\hogl_input.h" />
+    <ClInclude Include="src\hogl_wnd.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="C:\dev\hogl\hogl-c\hogl\ZERO_CHECK.vcxproj">
