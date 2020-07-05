@@ -23,6 +23,11 @@ struct hogl_context {
 	 * @brief Window manager system used for hogl
 	*/
 	hogl_cs_wndmanager* window_manager;
+
+	/**
+	 * @brief Rendering system used by hogl to provide common rendering abstractions
+	*/
+	hogl_cs_renderer* renderer;
 };
 
 /**

@@ -9,6 +9,18 @@
 
 HOGL_NSPACE_BEGIN
 
+void GLAPIENTRY gl_error_cb(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer)
+{
+	if (type == GL_DEBUG_TYPE_ERROR)
+	{
+		std::cout << "[hogl:error] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
+	}
+	else
+	{
+		std::cout << "[hogl:warn] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
+	}
+}
+
 hogl_cs_wndmanager::~hogl_cs_wndmanager()
 {
 	for (hogl_wnd* wnd : m_windows)
@@ -73,6 +85,12 @@ hogl_wnd* hogl_cs_wndmanager::create()
 		std::cout << "[hogl:error] Failed to initialize GLAD\n";
 		return nullptr;
 	}
+
+	// OpenGL error handling
+#ifdef _DEBUG
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(gl_error_cb, 0);
+#endif
 
 	// Create hogl window
 	pWnd = new hogl_wnd();

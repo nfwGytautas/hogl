@@ -119,7 +119,8 @@
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/build/Debug/sandbox.exe C:/dev/hogl/build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -131,7 +132,7 @@ exit /b %1
 if %errorlevel% neq 0 goto :VCEnd</Command>
     </PostBuildEvent>
     <Link>
-      <AdditionalDependencies>..\build\Debug\hogl.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\build\Debug\hogl.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:/dev/hogl/build;C:/dev/hogl/build/$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -175,7 +176,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/build/Release/sandbox.exe C:/dev/hogl/build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -231,7 +233,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/build/MinSizeRel/sandbox.exe C:/dev/hogl/build/
 if %errorlevel% neq 0 goto :cmEnd
@@ -286,7 +289,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <ProxyFileName>%(Filename)_p.c</ProxyFileName>
     </Midl>
     <PostBuildEvent>
-      <Message></Message>
+      <Message>
+      </Message>
       <Command>setlocal
 D:\Programming\CMake\bin\cmake.exe -E copy C:/dev/hogl/build/RelWithDebInfo/sandbox.exe C:/dev/hogl/build/
 if %errorlevel% neq 0 goto :cmEnd

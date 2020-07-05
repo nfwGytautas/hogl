@@ -8,31 +8,78 @@ HOGL_NSPACE_BEGIN
 /**
  * @brief hogl event modifier, representing if any special keys (ctrl, alt, etc.) were pressed during the event
 */
-enum hogl_e_modifier
+enum class hogl_e_modifier
 {
-	HOGL_ENUM_MOD_SHIFT,
-	HOGL_ENUM_MOD_CONTROL,
-	HOGL_ENUM_MOD_ALT,
-	HOGL_ENUM_MOD_SUPER,
-	HOGL_ENUM_MOD_CAPS,
-	HOGL_ENUM_MOD_NUM
+	SHIFT,
+	CONTROL,
+	ALT,
+	SUPER,
+	CAPS,
+	NUM
 };
 
 /**
  * @brief hogl event action, representing the actual action for key events, REPEAT is keyboard event specific
 */
-enum hogl_e_action
+enum class hogl_e_action
 {
-	HOGL_ENUM_MOD_DOWN,
-	HOGL_ENUM_MOD_UP,
-	HOGL_ENUM_MOD_REPEAT
+	DOWN,
+	UP,
+	REPEAT
+};
+
+/**
+ * @brief hogl possible vertex buffer object types
+*/
+enum class hogl_vbo_type
+{
+	UNSET,
+	ARRAY_BUFFER,
+	ELEMENT_BUFFER
+};
+
+/**
+ * @brief hogl possible vertex buffer object usages
+*/
+enum class hogl_vbo_usage
+{
+	UNSET,
+	STREAM,
+	STATIC,
+	DYNAMIC
+};
+
+/**
+ * @brief hogl possible vertex attribute pointer type
+*/
+enum class hogl_ap_type
+{
+	FLOAT,
+	UINT
+};
+
+/**
+ * @brief hogl possible vertex attribute pointer count
+*/
+enum class hogl_ap_count
+{
+	ONE = 1,
+	TWO = 2,
+	THREE = 3,
+	FOUR = 4
 };
 
 // C++ specific Forward declarations
 class hogl_cs_input;
 class hogl_cs_wndmanager;
+class hogl_cs_renderer;
+class hogl_i_render_target;
+class hogl_wnd_render_target;
+class hogl_cs_loader;
+class hogl_obj_builder;
 
 struct hogl_wnd;
+struct hogl_object;
 struct hogl_e_interface;
 struct hogl_e_mkey;
 struct hogl_e_mmove;

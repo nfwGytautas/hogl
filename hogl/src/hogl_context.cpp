@@ -7,24 +7,44 @@
 
 #include "hogl_input.hpp"
 #include "hogl_wnd.hpp"
+#include "hogl_renderer.hpp"
 
 HOGL_NSPACE_BEGIN
 
 hogl_context* hogl_init()
 {
-	hogl_context* pContext = new hogl_context();
-	pContext->window_manager = new hogl_cs_wndmanager();
-	pContext->input_system = new hogl_cs_input();
+	hogl_context* pContext = nullptr;
 
 	std::cout << "[hogl:info] Initializing hogl context\n";
 
 	std::cout << "[hogl:info] GLFW\n";
 
-	glfwInit();
+	// Set error callback
+	glfwSetErrorCallback(
+		[](int errCode, const char* msg)
+	{
+		std::cout << "[hogl:error] GLFW error:\n Code: " << errCode << "\n Message: " << msg << "\n";
+	});
+
+	if (glfwInit() != GLFW_TRUE)
+	{
+		return pContext;
+	};
+
+	// Since we use glDebugMessageCallback we need to specify OpenGL version to be atleast 4.3
+#ifdef _DEBUG
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+#else
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+#endif
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	pContext = new hogl_context();
+	pContext->window_manager = new hogl_cs_wndmanager();
+	pContext->input_system = new hogl_cs_input();
+	pContext->renderer = new hogl_cs_renderer();
 
 	std::cout << "[hogl:info] hogl initialized\n";
 
@@ -38,6 +58,10 @@ void hogl_shutdown(hogl_context*& context)
 	// Make sure we don't double free
 	if (context != nullptr)
 	{
+		delete context->input_system;
+		delete context->window_manager;
+		delete context->renderer;
+
 		delete context;
 		context = nullptr;
 
