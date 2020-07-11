@@ -10,7 +10,7 @@ HOGL_NSPACE_BEGIN
 /**
  * @brief hogl window managing system
 */
-class hogl_cs_wndmanager
+class HOGL_API hogl_cs_wndmanager
 {
 public:
 	~hogl_cs_wndmanager();
@@ -48,7 +48,7 @@ private:
 /**
  * @brief hogl window
 */
-struct hogl_wnd {
+struct HOGL_API hogl_wnd {
 	/**
 	 * @brief [STATE] Specifies if this window is closed, 0 for NO otherwise YES, default NO
 	*/

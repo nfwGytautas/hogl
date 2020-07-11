@@ -17,7 +17,7 @@ add_dependencies(sandbox hogl)
 
 # Some MSVC flags
 set_property(TARGET sandbox PROPERTY
-	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 set_property(TARGET sandbox PROPERTY 
 	VS_DEBUGGER_WORKING_DIRECTORY "${BuildDir}")
@@ -27,3 +27,13 @@ target_link_libraries(sandbox PUBLIC hogl)
 
 add_custom_command(TARGET sandbox POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:sandbox> ${BuildDir})
+
+# Copy headers 
+add_custom_command(TARGET sandbox PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/ ${ShaderDir})
+
+# Copy headers 
+add_custom_command(TARGET sandbox PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_CURRENT_SOURCE_DIR}/src/res/ ${ResourceDir})

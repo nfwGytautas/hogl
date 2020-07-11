@@ -3,6 +3,15 @@
 #define HOGL_NSPACE_BEGIN namespace hogl {
 #define HOGL_NSPACE_END }
 
+#ifdef HOGL_EXPORT
+#define HOGL_API __declspec(dllexport)
+#else
+#define HOGL_API __declspec(dllimport)
+#endif
+
+#define HOGL_LOG_ERROR(text) std::cout << "[hogl:error] " << text << "\n"
+#define HOGL_LOG_WARN(text) std::cout << "[hogl:warn] " << text << "\n"
+
 HOGL_NSPACE_BEGIN
 
 /**
@@ -63,23 +72,108 @@ enum class hogl_ap_type
 */
 enum class hogl_ap_count
 {
-	ONE = 1,
-	TWO = 2,
-	THREE = 3,
-	FOUR = 4
+	ONE		= 1,
+	TWO		= 2,
+	THREE	= 3,
+	FOUR	= 4
 };
+
+/**
+ * @brief hogl possible depth test values
+*/
+enum class hogl_render_depth
+{
+	DISABLED,
+	ALWAYS,
+	NEVER,
+	LESS,
+	EQUAL,
+	LEQUAL,
+	GREATER,
+	NOTEQUAL,
+	GEQUAL
+};
+
+/**
+ * @brief hogl possible texture formats
+*/
+enum class hogl_texture_format
+{
+	RED,
+	RGB,
+	RGBA
+};
+
+/**
+ * @brief hogl possible axis for texture wrapping options
+*/
+enum class hogl_wrap_axis
+{
+	X,
+	Y,
+	Z
+};
+
+/**
+ * @brief hogl possible texture wrapping options
+*/
+enum class hogl_wrap_type
+{
+	REPEAT,
+	MIRRORED,
+	EDGE_CLAMP,
+	BORDER_CLAMP
+};
+
+/**
+ * @brief hogl possible texture filtering options
+*/
+enum class hogl_filter_type
+{
+	NEAREST,
+	LINEAR,
+	NEAREST_MIPMAP_NEAREST,
+	NEAREST_MIPMAP_LINEAR,
+	LINEAR_MIPMAP_NEAREST,
+	LINEAR_MIPMAP_LINEAR
+};
+
+// Constants
+
+/**
+ * @brief This is dependent on hardware, but the OpenGL 3.3 specification says,
+ * that this is the minimum amount of slots that any implementation should have
+*/
+constexpr auto HOGL_MAX_TEXTURE_SLOTS = 32;
 
 // C++ specific Forward declarations
 class hogl_cs_input;
 class hogl_cs_wndmanager;
 class hogl_cs_renderer;
+class hogl_cs_loader;
+
 class hogl_i_render_target;
 class hogl_wnd_render_target;
-class hogl_cs_loader;
-class hogl_obj_builder;
+
+class hogl_bldr_mesh;
+class hogl_bldr_shader;
+class hogl_bldr_ubo;
+class hogl_bldr_texture;
 
 struct hogl_wnd;
-struct hogl_object;
+
+struct hogl_render_object;
+struct hogl_render_draw_call;
+
+struct hogl_mesh;
+struct hogl_shader;
+struct hogl_ubo_bind_range;
+struct hogl_ubo;
+struct hogl_shader_layout;
+struct hogl_texture;
+
+struct hogl_loader_image;
+
 struct hogl_e_interface;
 struct hogl_e_mkey;
 struct hogl_e_mmove;

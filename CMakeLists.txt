@@ -12,10 +12,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
 
 # Variables
 set(BuildDir ${CMAKE_CURRENT_SOURCE_DIR}/build/)
+set(ShaderDir ${BuildDir}shaders/)
+set(ResourceDir ${BuildDir}res/)
 set(HeaderDir ${BuildDir}hogl/)
 
 # Create dir
 file(MAKE_DIRECTORY ${HeaderDir})
+file(MAKE_DIRECTORY ${ShaderDir})
 
 # hogl
 add_subdirectory(hogl)

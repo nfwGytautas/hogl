@@ -15,6 +15,10 @@ void GLAPIENTRY gl_error_cb(GLenum source, GLenum type, GLuint id, GLenum severi
 	{
 		std::cout << "[hogl:error] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
 	}
+	else if (type == GL_DEBUG_TYPE_OTHER)
+	{
+		std::cout << "[hogl:info] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
+	}
 	else
 	{
 		std::cout << "[hogl:warn] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";

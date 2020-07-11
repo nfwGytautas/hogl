@@ -10,7 +10,7 @@ HOGL_NSPACE_BEGIN
 /**
  * @brief hogl input system, used to take care of the end user
 */
-class hogl_cs_input
+class HOGL_API hogl_cs_input
 {
 public:
 	~hogl_cs_input();
@@ -78,7 +78,7 @@ private:
 /**
  * @brief hogl mouse button event
 */
-struct hogl_e_mkey
+struct HOGL_API hogl_e_mkey
 {
 	/**
 	 * @brief Button that caused the event
@@ -104,7 +104,7 @@ struct hogl_e_mkey
 /**
  * @brief hogl mouse moved event
 */
-struct hogl_e_mmove
+struct HOGL_API hogl_e_mmove
 {
 	/**
 	 * @brief Mouse position in the x axis, relative to left edge
@@ -125,7 +125,7 @@ struct hogl_e_mmove
 /**
  * @brief hogl mouse scroll event
 */
-struct hogl_e_mscroll
+struct HOGL_API hogl_e_mscroll
 {
 	/**
 	 * @brief X axis offset
@@ -146,7 +146,7 @@ struct hogl_e_mscroll
 /**
  * @brief hogl keyboard key input event
 */
-struct hogl_e_key
+struct HOGL_API hogl_e_key
 {
 	/**
 	 * @brief Button that caused the event
@@ -172,7 +172,7 @@ struct hogl_e_key
 /**
  * @brief hogl event bus is used to create an event sink for hogl events
 */
-struct hogl_e_interface
+struct HOGL_API hogl_e_interface
 {
 	/**
 	 * @brief User pointer for this interface

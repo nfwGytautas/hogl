@@ -10,7 +10,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 
 # Defines
-#add_compile_definitions(HOGL_VS)
+add_compile_definitions(HOGL_EXPORT)
 
 # Executable
 file(GLOB SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
@@ -18,7 +18,7 @@ add_library(hogl SHARED ${SOURCE_FILES})
 
 # Some MSVC flags
 set_property(TARGET hogl PROPERTY
-	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 set_property(TARGET hogl PROPERTY 
 	VS_DEBUGGER_WORKING_DIRECTORY "${BuildDir}")

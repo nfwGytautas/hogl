@@ -8,6 +8,7 @@
 #include "hogl_input.hpp"
 #include "hogl_wnd.hpp"
 #include "hogl_renderer.hpp"
+#include "hogl_loader.hpp"
 
 HOGL_NSPACE_BEGIN
 
@@ -45,6 +46,7 @@ hogl_context* hogl_init()
 	pContext->window_manager = new hogl_cs_wndmanager();
 	pContext->input_system = new hogl_cs_input();
 	pContext->renderer = new hogl_cs_renderer();
+	pContext->loader = new hogl_cs_loader();
 
 	std::cout << "[hogl:info] hogl initialized\n";
 
@@ -61,6 +63,7 @@ void hogl_shutdown(hogl_context*& context)
 		delete context->input_system;
 		delete context->window_manager;
 		delete context->renderer;
+		delete context->loader;
 
 		delete context;
 		context = nullptr;
