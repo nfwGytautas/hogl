@@ -5,8 +5,8 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
-#include "hogl_wnd.hpp"
-#include "hogl_object.hpp"
+#include "hogl/core/hogl_wnd.hpp"
+#include "hogl/core/hogl_object.hpp"
 
 HOGL_NSPACE_BEGIN
 

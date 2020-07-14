@@ -3,7 +3,7 @@
 #include <vector>
 
 // Common hogl library types
-#include "hogl_types.hpp"
+#include "hogl/hogl_types.hpp"
 
 HOGL_NSPACE_BEGIN
 

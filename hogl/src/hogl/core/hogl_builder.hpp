@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hogl_types.hpp"
+#include "hogl/hogl_types.hpp"
 
 HOGL_NSPACE_BEGIN
 
@@ -69,7 +69,7 @@ private:
  * @brief hogl shader builder used to create or alter hogl objects,
  * make sure that a OpenGL context is active on the current thread
 */
-class hogl_bldr_shader
+class HOGL_API hogl_bldr_shader
 {
 public:
 	/**
@@ -146,7 +146,7 @@ private:
  * @brief hogl ubo builder used to create or alter hogl objects,
  * make sure that a OpenGL context is active on the current thread
 */
-class hogl_bldr_ubo
+class HOGL_API hogl_bldr_ubo
 {
 public:
 	/**
@@ -193,7 +193,7 @@ private:
  * @brief hogl texture builder used to create or alter hogl objects,
  * make sure that a OpenGL context is active on the current thread
 */
-class hogl_bldr_texture
+class HOGL_API hogl_bldr_texture
 {
 public:
 	/**
@@ -260,25 +260,25 @@ private:
 };
 
 /**
- * @brief Create a new mesh, the instance is inside the builder, make sure to call hogl_free_mesh after using the mesh
+ * @brief Create a new mesh, the instance is inside the builder, make sure to call hogl_free after using the mesh
  * @return hogl_bldr_mesh instance with the new mesh object instance
 */
 HOGL_API hogl_bldr_mesh hogl_new_mesh();
 
 /**
- * @brief Create a new shader, the instance is inside the builder, make sure to call hogl_free_shader after using the shader
+ * @brief Create a new shader, the instance is inside the builder, make sure to call hogl_free after using the shader
  * @return hogl_bldr_shader instance with the new shader object instance
 */
 HOGL_API hogl_bldr_shader hogl_new_shader();
 
 /**
- * @brief Create a new ubo, the instance is inside the builder, make sure to call hogl_free_ubo after using the ubo
+ * @brief Create a new ubo, the instance is inside the builder, make sure to call hogl_free after using the ubo
  * @return hogl_bldr_ubo instance with the new ubo instance
 */
 HOGL_API hogl_bldr_ubo hogl_new_ubo();
 
 /**
- * @brief Create a new texture, the instance is inside the builder, make sure to call hogl_free_texture after using the texture
+ * @brief Create a new texture, the instance is inside the builder, make sure to call hogl_free after using the texture
  * @return hogl_bldr_texture instance with the new texture instance
 */
 HOGL_API hogl_bldr_texture hogl_new_texture();
@@ -287,24 +287,24 @@ HOGL_API hogl_bldr_texture hogl_new_texture();
  * @brief Free a hogl_mesh object
  * @param mesh Pointer to a hogl_mesh object instance
 */
-HOGL_API void hogl_free_mesh(hogl_mesh*& mesh);
+HOGL_API void hogl_free(hogl_mesh*& mesh);
 
 /**
  * @brief Free a hogl_shader object
  * @param shader Pointer to a hogl_shader object instance
 */
-HOGL_API void hogl_free_shader(hogl_shader*& shader);
+HOGL_API void hogl_free(hogl_shader*& shader);
 
 /**
  * @brief Free a hogl_ubo object
  * @param ubo Pointer to a hogl_ubo object instance
 */
-HOGL_API void hogl_free_ubo(hogl_ubo*& ubo);
+HOGL_API void hogl_free(hogl_ubo*& ubo);
 
 /**
  * @brief Free a hogl_texture object
  * @param texture Pointer to a hogl_texture object instance
 */
-HOGL_API void hogl_free_texture(hogl_texture*& texture);
+HOGL_API void hogl_free(hogl_texture*& texture);
 
 HOGL_NSPACE_END

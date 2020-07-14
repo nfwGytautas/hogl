@@ -6,7 +6,7 @@ include_directories(${BuildDir})
 link_directories(${BuildDir})
 
 # Defines
-#add_compile_definitions(HOGL_VS)
+add_compile_definitions(HOGL_INCLUDE_LEVEL_1)
 
 # Executable
 file(GLOB SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)

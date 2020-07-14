@@ -11,9 +11,10 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/)
 
 # Defines
 add_compile_definitions(HOGL_EXPORT)
+add_compile_definitions(HOGL_INCLUDE_LEVEL_1)
 
 # Executable
-file(GLOB SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
+file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
 add_library(hogl SHARED ${SOURCE_FILES})
 
 # Some MSVC flags
@@ -29,7 +30,7 @@ target_link_libraries(hogl PRIVATE Glad PRIVATE glfw3)
 # Copy headers 
 add_custom_command(TARGET hogl PRE_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory
-                       ${CMAKE_CURRENT_SOURCE_DIR}/src/ ${HeaderDir})
+                       ${CMAKE_CURRENT_SOURCE_DIR}/src/hogl/ ${HeaderDir})
 
 # DLL and Lib
 add_custom_command(TARGET hogl POST_BUILD

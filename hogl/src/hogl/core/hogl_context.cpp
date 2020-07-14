@@ -5,10 +5,10 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
-#include "hogl_input.hpp"
-#include "hogl_wnd.hpp"
-#include "hogl_renderer.hpp"
-#include "hogl_loader.hpp"
+#include "hogl/core/hogl_input.hpp"
+#include "hogl/core/hogl_wnd.hpp"
+#include "hogl/core/hogl_renderer.hpp"
+#include "hogl/core/hogl_loader.hpp"
 
 HOGL_NSPACE_BEGIN
 

@@ -5,7 +5,7 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
-#include "hogl_input.hpp"
+#include "hogl/core/hogl_input.hpp"
 
 HOGL_NSPACE_BEGIN
 

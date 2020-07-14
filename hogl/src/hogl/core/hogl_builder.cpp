@@ -6,8 +6,8 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
-#include "hogl_object.hpp"
-#include "hogl_loader.hpp"
+#include "hogl/core/hogl_object.hpp"
+#include "hogl/core/hogl_loader.hpp"
 
 HOGL_NSPACE_BEGIN
 
@@ -418,7 +418,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_data(hogl_loader_image* image_data)
 {
     if (!m_hasTexture)
     {
-        HOGL_LOG_ERROR("Cannot add data to non existant texture");
+        HOGL_LOG_ERROR("Cannot add data to non existent texture");
         return *this;
     }
 
@@ -437,6 +437,9 @@ hogl_bldr_texture& hogl_bldr_texture::add_data(hogl_loader_image* image_data)
     case hogl_texture_format::RGBA:
         format = GL_RGBA;
         break;
+    case hogl_texture_format::NONE:
+        HOGL_LOG_ERROR("Unspecified texture format!");
+        return *this;
     }
     glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
     return *this;
@@ -587,7 +590,7 @@ hogl_bldr_texture hogl_new_texture()
     return hogl_bldr_texture(texture);
 }
 
-void hogl_free_mesh(hogl_mesh*& mesh)
+void hogl_free(hogl_mesh*& mesh)
 {
     // Free OpenGL resources here
     glDeleteVertexArrays(1, &mesh->vao_id);
@@ -599,7 +602,7 @@ void hogl_free_mesh(hogl_mesh*& mesh)
     mesh = nullptr;
 }
 
-void hogl_free_shader(hogl_shader*& shader)
+void hogl_free(hogl_shader*& shader)
 {
     // Free OpenGL resource here
     glDeleteProgram(shader->shader_id);
@@ -609,7 +612,7 @@ void hogl_free_shader(hogl_shader*& shader)
     shader = nullptr;
 }
 
-void hogl_free_ubo(hogl_ubo*& ubo)
+void hogl_free(hogl_ubo*& ubo)
 {
     glDeleteBuffers(1, &ubo->ubo_id);
 
@@ -618,7 +621,7 @@ void hogl_free_ubo(hogl_ubo*& ubo)
     ubo = nullptr;
 }
 
-void hogl_free_texture(hogl_texture*& texture)
+void hogl_free(hogl_texture*& texture)
 {
     glDeleteTextures(1, &texture->texture_id);
 

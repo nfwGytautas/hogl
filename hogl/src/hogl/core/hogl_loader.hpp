@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 
-#include "hogl_types.hpp"
+#include "hogl/hogl_types.hpp"
 
 HOGL_NSPACE_BEGIN
 
@@ -33,7 +33,7 @@ public:
 /**
  * @brief This struct describes a image loaded into memory using hogl_cs_loader
 */
-struct hogl_loader_image
+struct HOGL_API hogl_loader_image
 {
 	/**
 	 * @brief Data buffer
@@ -53,7 +53,7 @@ struct hogl_loader_image
 	/**
 	 * @brief Image format
 	*/
-	hogl_texture_format format;
+	hogl_texture_format format = hogl_texture_format::NONE;
 };
 
 HOGL_NSPACE_END

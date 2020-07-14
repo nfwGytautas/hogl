@@ -3,6 +3,9 @@
 #define HOGL_NSPACE_BEGIN namespace hogl {
 #define HOGL_NSPACE_END }
 
+#define HOGL_NSPACE_BEGIN_L1 HOGL_NSPACE_BEGIN namespace al1 {
+#define HOGL_NSPACE_END_L2 HOGL_NSPACE_END }
+
 #ifdef HOGL_EXPORT
 #define HOGL_API __declspec(dllexport)
 #else
@@ -99,6 +102,7 @@ enum class hogl_render_depth
 */
 enum class hogl_texture_format
 {
+	NONE,
 	RED,
 	RGB,
 	RGBA

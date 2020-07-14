@@ -3,7 +3,7 @@
 #include <vector>
 
 // Common hogl library types
-#include "hogl_types.hpp"
+#include "hogl/hogl_types.hpp"
 
 HOGL_NSPACE_BEGIN
 
@@ -25,7 +25,6 @@ public:
 	 * @return hogl_wnd instance or null if there was an error
 	*/
 	hogl_wnd* create();
-
 private:
 	/**
 	 * @brief Updates the specified window

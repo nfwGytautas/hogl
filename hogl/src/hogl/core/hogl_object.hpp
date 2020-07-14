@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <string>
 
-#include "hogl_types.hpp"
+#include "hogl/hogl_types.hpp"
 
 HOGL_NSPACE_BEGIN
 

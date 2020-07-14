@@ -17,7 +17,7 @@ void key_callback(void* user_pointer, const hogl_e_key* event)
     std::cout << "Key: " << event->key << "\n";
 }
 
-int texture_test()
+int test()
 {
     // Create context
     hogl_context* context = hogl_init();
@@ -151,10 +151,10 @@ int texture_test()
 
     // Free resources
     delete target;
-    hogl_free_mesh(mesh);
-    hogl_free_shader(shader);
-    hogl_free_texture(texture1);
-    hogl_free_texture(texture2);
+    hogl_free(mesh);
+    hogl_free(shader);
+    hogl_free(texture1);
+    hogl_free(texture2);
 
     // Shutdown hogl
     hogl_shutdown(context);
