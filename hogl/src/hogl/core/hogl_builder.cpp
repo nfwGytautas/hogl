@@ -58,6 +58,27 @@ GLenum get_usage(hogl_vbo_usage usage)
     return 0;
 }
 
+std::pair<GLenum, GLenum> get_rbo_params(hogl_rbuffer_format format) 
+{
+    switch (format)
+    {
+    case hogl_rbuffer_format::d16:
+        return std::make_pair(GL_DEPTH_COMPONENT16, GL_DEPTH_ATTACHMENT);
+    case hogl_rbuffer_format::d24:
+        return std::make_pair(GL_DEPTH_COMPONENT24, GL_DEPTH_ATTACHMENT);
+    case hogl_rbuffer_format::d32F:
+        return std::make_pair(GL_DEPTH_COMPONENT32F, GL_DEPTH_ATTACHMENT);
+    case hogl_rbuffer_format::d24_s8:
+        return std::make_pair(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+    case hogl_rbuffer_format::d32F_s8:
+        return std::make_pair(GL_DEPTH32F_STENCIL8, GL_DEPTH_STENCIL_ATTACHMENT);
+    case hogl_rbuffer_format::si8:
+        return std::make_pair(GL_STENCIL_INDEX8, GL_STENCIL_ATTACHMENT);
+    }
+
+    return std::make_pair(0, 0);
+}
+
 void verify_shader_compilation(unsigned int shader)
 {
     int  success;
@@ -414,7 +435,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_texture()
     return *this;
 }
 
-hogl_bldr_texture& hogl_bldr_texture::add_data(hogl_loader_image* image_data)
+hogl_bldr_texture& hogl_bldr_texture::add_image(hogl_loader_image<unsigned char>* image_data)
 {
     if (!m_hasTexture)
     {
@@ -440,8 +461,50 @@ hogl_bldr_texture& hogl_bldr_texture::add_data(hogl_loader_image* image_data)
     case hogl_texture_format::NONE:
         HOGL_LOG_ERROR("Unspecified texture format!");
         return *this;
+    default:
+        HOGL_LOG_ERROR("Incompatible format for a normal image!");
+        return *this;
     }
     glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
+    return *this;
+}
+
+hogl_bldr_texture& hogl_bldr_texture::add_hdr(hogl_loader_image<float>* image_data)
+{
+    if (!m_hasTexture)
+    {
+        HOGL_LOG_ERROR("Cannot add data to non existent texture");
+        return *this;
+    }
+
+    // Bind texture
+    glBindTexture(GL_TEXTURE_2D, m_texture->texture_id);
+
+    GLenum format = 0;
+    GLenum displayFormat = 0;
+
+    switch (image_data->format)
+    {
+    case hogl_texture_format::R16F:
+        format = GL_R16F;
+        displayFormat = GL_RED;
+        break;
+    case hogl_texture_format::RGB16F:
+        format = GL_RGB16F;
+        displayFormat = GL_RGB;
+        break;
+    case hogl_texture_format::RGBA16F:
+        format = GL_RGBA16F;
+        displayFormat = GL_RGBA;
+        break;
+    case hogl_texture_format::NONE:
+        HOGL_LOG_ERROR("Unspecified texture format!");
+        return *this;
+    default:
+        HOGL_LOG_ERROR("Incompatible format for a hdr image!");
+        return *this;
+    }
+    glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, displayFormat, GL_FLOAT, image_data->data.get());
     return *this;
 }
 
@@ -566,6 +629,52 @@ hogl_texture* hogl_bldr_texture::ptr()
     return m_texture;
 }
 
+hogl_bldr_framebuffer::hogl_bldr_framebuffer(hogl_framebuffer* fbo)
+    : m_fbo(fbo)
+{
+}
+
+hogl_bldr_framebuffer& hogl_bldr_framebuffer::set_fbo(unsigned int fbo)
+{
+    m_fbo->fbo_id = fbo;
+    m_hasFBO = true;
+    return *this;
+}
+
+hogl_bldr_framebuffer& hogl_bldr_framebuffer::add_fbo()
+{
+    glGenFramebuffers(1, &m_fbo->fbo_id);
+    m_hasFBO = true;
+    return *this;
+}
+
+hogl_bldr_framebuffer& hogl_bldr_framebuffer::attach_renderbuffer(unsigned int width, unsigned int height, hogl_rbuffer_format format)
+{
+    if (!m_hasFBO)
+    {
+        HOGL_LOG_WARN("FBO not specified!");
+        return *this;
+    }
+
+    glGenRenderbuffers(1, &m_fbo->rbo_id);
+
+    // Bind
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->fbo_id);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_fbo->rbo_id);
+
+    auto& params = get_rbo_params(format);
+
+    glRenderbufferStorage(GL_RENDERBUFFER, params.first, width, height);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, params.second, GL_RENDERBUFFER, m_fbo->rbo_id);
+    
+    return *this;
+}
+
+hogl_framebuffer* hogl_bldr_framebuffer::ptr()
+{
+    return m_fbo;
+}
+
 hogl_bldr_mesh hogl_new_mesh()
 {
     hogl_mesh* mesh = new hogl_mesh();
@@ -588,6 +697,12 @@ hogl_bldr_texture hogl_new_texture()
 {
     hogl_texture* texture = new hogl_texture();
     return hogl_bldr_texture(texture);
+}
+
+hogl_bldr_framebuffer hogl_new_framebuffer()
+{
+    hogl_framebuffer* fbo = new hogl_framebuffer();
+    return hogl_bldr_framebuffer(fbo);
 }
 
 void hogl_free(hogl_mesh*& mesh)
@@ -627,6 +742,19 @@ void hogl_free(hogl_texture*& texture)
 
     delete texture;
     texture = nullptr;
+}
+
+void hogl_free(hogl_framebuffer*& fbo)
+{
+    glDeleteFramebuffers(1, &fbo->fbo_id);
+
+    if (fbo->rbo_id > 0) 
+    {
+        glDeleteRenderbuffers(1, &fbo->rbo_id);
+    }
+
+    delete fbo;
+    fbo = nullptr;
 }
 
 HOGL_NSPACE_END

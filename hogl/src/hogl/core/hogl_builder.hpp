@@ -182,7 +182,7 @@ public:
 
 	/**
 	 * @brief Returns the instance that this builder has built
-	 * @return Pointer to a hogl_shader instance
+	 * @return Pointer to a hogl_ubo instance
 	*/
 	hogl_ubo* ptr();
 private:
@@ -209,7 +209,7 @@ public:
 	hogl_bldr_texture& set_texture(unsigned int texture);
 
 	/**
-	 * @brief Create a new ubo for this object
+	 * @brief Create a new texture for this object
 	*/
 	hogl_bldr_texture& add_texture();
 
@@ -217,7 +217,13 @@ public:
 	 * @brief Adds image data to the texture
 	 * @param image_data Data to add to the texture
 	*/
-	hogl_bldr_texture& add_data(hogl_loader_image* image_data);
+	hogl_bldr_texture& add_image(hogl_loader_image<unsigned char>* image_data);
+
+	/**
+	 * @brief Adds image data to the texture
+	 * @param image_data Data to add to the texture
+	*/
+	hogl_bldr_texture& add_hdr(hogl_loader_image<float>* image_data);
 
 	/**
 	 * @brief Generate mipmaps for this texture
@@ -251,12 +257,54 @@ public:
 
 	/**
 	 * @brief Returns the instance that this builder has built
-	 * @return Pointer to a hogl_shader instance
+	 * @return Pointer to a hogl_texture instance
 	*/
 	hogl_texture* ptr();
 private:
 	hogl_texture* m_texture = nullptr;
 	bool m_hasTexture = false;
+};
+
+/**
+ * @brief hogl framebuffer builder used to create or alter hogl objects,
+ * make sure that a OpenGL context is active on the current thread
+*/
+class HOGL_API hogl_bldr_framebuffer
+{
+public:
+	/**
+	 * @brief Create a builder for the specified object
+	 * @param texture Instance to a hogl_framebuffer to build
+	*/
+	hogl_bldr_framebuffer(hogl_framebuffer* fbo);
+
+	/**
+	 * @brief Set framebuffer for this object to the one specified
+	 * @param texture ID of the texture
+	*/
+	hogl_bldr_framebuffer& set_fbo(unsigned int fbo);
+
+	/**
+	 * @brief Create a new fbo for this object
+	*/
+	hogl_bldr_framebuffer& add_fbo();
+
+	/**
+	 * @brief Attach a render buffer to the framebuffer
+	 * @param width Width of the renderbuffer
+	 * @param height Height of the renderbuffer
+	 * @param format Format of the renderbuffer
+	*/
+	hogl_bldr_framebuffer& attach_renderbuffer(unsigned int width, unsigned int height, hogl_rbuffer_format format);
+
+	/**
+	 * @brief Returns the instance that this builder has built
+	 * @return Pointer to a hogl_framebuffer instance
+	*/
+	hogl_framebuffer* ptr();
+private:
+	hogl_framebuffer* m_fbo = nullptr;
+	bool m_hasFBO = false;
 };
 
 /**
@@ -284,6 +332,12 @@ HOGL_API hogl_bldr_ubo hogl_new_ubo();
 HOGL_API hogl_bldr_texture hogl_new_texture();
 
 /**
+ * @brief Creates a new framebuffer, the instance is inside the builder, make sure to call hogl_free after using the texture
+ * @return hogl_bldr_framebuffer instance with the new framebuffer instance
+*/
+HOGL_API hogl_bldr_framebuffer hogl_new_framebuffer();
+
+/**
  * @brief Free a hogl_mesh object
  * @param mesh Pointer to a hogl_mesh object instance
 */
@@ -306,5 +360,12 @@ HOGL_API void hogl_free(hogl_ubo*& ubo);
  * @param texture Pointer to a hogl_texture object instance
 */
 HOGL_API void hogl_free(hogl_texture*& texture);
+
+/**
+ * @brief Free a hogl_framebuffer object
+ * @param fbo Pointer to a hogl_framebuffer object instance
+ * @return 
+*/
+HOGL_API void hogl_free(hogl_framebuffer*& fbo);
 
 HOGL_NSPACE_END

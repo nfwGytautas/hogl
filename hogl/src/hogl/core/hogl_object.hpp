@@ -124,6 +124,22 @@ struct HOGL_API hogl_texture
 };
 
 /**
+ * @brief Generic framebuffer, that gently wraps a OpenGL fbo
+*/
+struct HOGL_API hogl_framebuffer
+{
+	/**
+	 * @brief ID of this framebuffer
+	*/
+	unsigned int fbo_id = 0;
+
+	/**
+	 * @brief Renderbuffer id, 0 if not attached
+	*/
+	unsigned int rbo_id = 0;
+};
+
+/**
  * @brief Set ubo data, by default this function will set the entire ubo data
  * @param ubo hogl_ubo object
  * @param data Data to set

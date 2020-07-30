@@ -90,17 +90,17 @@ int test()
             .ptr();
 
         // Load image data
-        hogl_loader_image image1_data;
+        hogl_loader_image<unsigned char> image1_data;
         context->loader->load_image(&image1_data, "res/pbr/rusted_iron/albedo.png");
 
-        hogl_loader_image image2_data;
+        hogl_loader_image<unsigned char> image2_data;
         context->loader->load_image(&image2_data, "res/pbr/grass/albedo.png");
 
         // Create texture
         hogl_obj_handle<hogl_texture> texture1 =
             hogl_new_texture()
             .add_texture()
-            .add_data(&image1_data)
+            .add_image(&image1_data)
             .generate_mipmap()
             .set_wrap(hogl_wrap_axis::X, hogl_wrap_type::REPEAT)
             .set_wrap(hogl_wrap_axis::Y, hogl_wrap_type::REPEAT)
@@ -112,7 +112,7 @@ int test()
         hogl_obj_handle<hogl_texture> texture2 =
             hogl_new_texture()
             .add_texture()
-            .add_data(&image2_data)
+            .add_image(&image2_data)
             .generate_mipmap()
             .set_wrap(hogl_wrap_axis::X, hogl_wrap_type::REPEAT)
             .set_wrap(hogl_wrap_axis::Y, hogl_wrap_type::REPEAT)

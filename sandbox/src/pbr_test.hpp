@@ -53,6 +53,10 @@ hogl_obj_handle<hogl_texture> wallMetallicMap;
 hogl_obj_handle<hogl_texture> wallRoughnessMap;
 hogl_obj_handle<hogl_texture> wallAOMap;
 
+hogl_obj_handle<hogl_texture> hdr;
+
+hogl_obj_handle<hogl_framebuffer> fbo;
+
 struct pbr_samplers
 {
 	int irradianceMap = 0;
@@ -164,19 +168,36 @@ void load_shaders()
 
 hogl_texture* load_2d_texture(const char* path)
 {
-	hogl_loader_image image_data;
+	hogl_loader_image<unsigned char> image_data;
 	context->loader->load_image(&image_data, path);
 
 	// Create texture
 	return 
 		hogl_new_texture()
 		.add_texture()
-		.add_data(&image_data)
+		.add_image(&image_data)
 		.generate_mipmap()
 		.set_wrap(hogl_wrap_axis::X, hogl_wrap_type::REPEAT)
 		.set_wrap(hogl_wrap_axis::Y, hogl_wrap_type::REPEAT)
 		.set_mag_filter(hogl_filter_type::LINEAR)
 		.set_min_filter(hogl_filter_type::LINEAR_MIPMAP_LINEAR)
+		.ptr();
+}
+
+hogl_texture* load_hdr_texture(const char* path)
+{
+	hogl_loader_image<float> image_data;
+	context->loader->load_hdr(&image_data, path);
+
+	// Create texture
+	return
+		hogl_new_texture()
+		.add_texture()
+		.add_hdr(&image_data)
+		.set_wrap(hogl_wrap_axis::X, hogl_wrap_type::EDGE_CLAMP)
+		.set_wrap(hogl_wrap_axis::Y, hogl_wrap_type::EDGE_CLAMP)
+		.set_mag_filter(hogl_filter_type::LINEAR)
+		.set_min_filter(hogl_filter_type::LINEAR)
 		.ptr();
 }
 
@@ -211,6 +232,17 @@ void load_textures()
 	wallMetallicMap.own(load_2d_texture("res/pbr/wall/metallic.png"));
 	wallRoughnessMap.own(load_2d_texture("res/pbr/wall/roughness.png"));
 	wallAOMap.own(load_2d_texture("res/pbr/wall/ao.png"));
+}
+
+void setup_fbo()
+{
+	// Create texture
+	fbo.own(
+		hogl_new_framebuffer()
+			.add_fbo()
+			.attach_renderbuffer(512, 512, hogl_rbuffer_format::d24)
+			.ptr()
+	);
 }
 
 int test()
@@ -271,7 +303,11 @@ int test()
 		300.0f, 300.0f, 300.0f
 	};
 
+	// Setup framebuffer
+	setup_fbo();
 
+	// Load HDR image
+	hdr.own(load_hdr_texture("res/hdr/newport_loft.hdr"));
 
 	// For advanced rendering we will use hogl_render_object and hogl_render_draw_call objects
 	//hogl_render_object render_object;

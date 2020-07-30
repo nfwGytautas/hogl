@@ -105,7 +105,10 @@ enum class hogl_texture_format
 	NONE,
 	RED,
 	RGB,
-	RGBA
+	RGBA,
+	R16F,
+	RGB16F,
+	RGBA16F,
 };
 
 /**
@@ -142,6 +145,19 @@ enum class hogl_filter_type
 	LINEAR_MIPMAP_LINEAR
 };
 
+/**
+ * @brief hogl possible formats for a render buffer
+*/
+enum class hogl_rbuffer_format
+{
+	d16,
+	d24,
+	d32F,
+	d24_s8,
+	d32F_s8,
+	si8
+};
+
 // Constants
 
 /**
@@ -175,7 +191,9 @@ struct hogl_ubo_bind_range;
 struct hogl_ubo;
 struct hogl_shader_layout;
 struct hogl_texture;
+struct hogl_framebuffer;
 
+template<typename T>
 struct hogl_loader_image;
 
 struct hogl_e_interface;
