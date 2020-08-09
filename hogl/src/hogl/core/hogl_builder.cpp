@@ -417,7 +417,7 @@ hogl_ubo* hogl_bldr_ubo::ptr()
 }
 
 hogl_bldr_texture::hogl_bldr_texture(hogl_texture* texture)
-    : m_texture(texture)
+    : m_texture(texture), m_bindTarget(GL_TEXTURE_2D), m_internalSlot(GL_TEXTURE_CUBE_MAP_POSITIVE_X)
 {
 }
 
@@ -435,6 +435,103 @@ hogl_bldr_texture& hogl_bldr_texture::add_texture()
     return *this;
 }
 
+hogl_bldr_texture& hogl_bldr_texture::set_cubemap()
+{
+    m_cubemap = true;
+    m_bindTarget = GL_TEXTURE_CUBE_MAP;
+    return *this;
+}
+
+hogl_bldr_texture& hogl_bldr_texture::increment_cslot(unsigned int step)
+{
+    m_internalSlot += step;
+    return *this;
+}
+
+hogl_bldr_texture& hogl_bldr_texture::reset_cslot()
+{
+    m_internalSlot = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+    return *this;
+}
+
+hogl_bldr_texture& hogl_bldr_texture::cslot_auto_increment(bool value)
+{
+    m_autoIncrement = value;
+    return *this;
+}
+
+hogl_bldr_texture& hogl_bldr_texture::alloc(unsigned int width, unsigned height, hogl_texture_format format)
+{
+    if (!m_hasTexture)
+    {
+        HOGL_LOG_ERROR("Cannot add data to non existent texture");
+        return *this;
+    }
+
+    // Bind texture
+    glBindTexture(m_bindTarget, m_texture->texture_id);
+
+    GLenum internalFormat = 0;
+    GLenum displayFormat = 0;
+    GLenum type = 0;
+
+    switch (format)
+    {
+    case hogl_texture_format::RED:
+        internalFormat = GL_RED;
+        displayFormat = GL_RED;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case hogl_texture_format::RGB:
+        internalFormat = GL_RGB;
+        displayFormat = GL_RGB;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case hogl_texture_format::RGBA:
+        internalFormat = GL_RGBA;
+        displayFormat = GL_RGBA;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case hogl_texture_format::R16F:
+        internalFormat = GL_R16F;
+        displayFormat = GL_RED;
+        type = GL_FLOAT;
+        break;
+    case hogl_texture_format::RGB16F:
+        internalFormat = GL_RGB16F;
+        displayFormat = GL_RGB;
+        type = GL_FLOAT;
+        break;
+    case hogl_texture_format::RGBA16F:
+        internalFormat = GL_RGBA16F;
+        displayFormat = GL_RGBA;
+        type = GL_FLOAT;
+        break;
+    case hogl_texture_format::NONE:
+        HOGL_LOG_ERROR("Unspecified texture format!");
+        return *this;
+    default:
+        HOGL_LOG_ERROR("Incompatible format for a normal image!");
+        return *this;
+    }
+
+    if (!m_cubemap)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, displayFormat, type, nullptr);
+    }
+    else
+    {
+        glTexImage2D(m_internalSlot, 0, internalFormat, width, height, 0, displayFormat, type, nullptr);
+    }
+
+    if (m_autoIncrement)
+    {
+        m_internalSlot++;
+    }
+
+    return *this;
+}
+
 hogl_bldr_texture& hogl_bldr_texture::add_image(hogl_loader_image<unsigned char>* image_data)
 {
     if (!m_hasTexture)
@@ -444,7 +541,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_image(hogl_loader_image<unsigned char>
     }
 
     // Bind texture
-    glBindTexture(GL_TEXTURE_2D, m_texture->texture_id);
+    glBindTexture(m_bindTarget, m_texture->texture_id);
 
     GLenum format = 0;
     switch (image_data->format)
@@ -465,7 +562,21 @@ hogl_bldr_texture& hogl_bldr_texture::add_image(hogl_loader_image<unsigned char>
         HOGL_LOG_ERROR("Incompatible format for a normal image!");
         return *this;
     }
-    glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
+
+    if (!m_cubemap) 
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
+    }
+    else 
+    {
+        glTexImage2D(m_internalSlot, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
+    }
+
+    if (m_autoIncrement)
+    {
+        m_internalSlot++;
+    }
+
     return *this;
 }
 
@@ -478,7 +589,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_hdr(hogl_loader_image<float>* image_da
     }
 
     // Bind texture
-    glBindTexture(GL_TEXTURE_2D, m_texture->texture_id);
+    glBindTexture(m_bindTarget, m_texture->texture_id);
 
     GLenum format = 0;
     GLenum displayFormat = 0;
@@ -504,13 +615,27 @@ hogl_bldr_texture& hogl_bldr_texture::add_hdr(hogl_loader_image<float>* image_da
         HOGL_LOG_ERROR("Incompatible format for a hdr image!");
         return *this;
     }
-    glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, displayFormat, GL_FLOAT, image_data->data.get());
+
+    if (!m_cubemap)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, displayFormat, GL_FLOAT, image_data->data.get());
+    }
+    else
+    {
+        glTexImage2D(m_internalSlot, 0, format, image_data->width, image_data->height, 0, displayFormat, GL_FLOAT, image_data->data.get());
+    }
+    
+    if (m_autoIncrement)
+    {
+        m_internalSlot++;
+    }
+
     return *this;
 }
 
 hogl_bldr_texture& hogl_bldr_texture::generate_mipmap()
 {
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glGenerateMipmap(m_bindTarget);
     return *this;
 }
 
@@ -548,7 +673,7 @@ hogl_bldr_texture& hogl_bldr_texture::set_wrap(hogl_wrap_axis axis, hogl_wrap_ty
         break;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, glaxis, gltype);
+    glTexParameteri(m_bindTarget, glaxis, gltype);
     return *this;
 }
 
@@ -578,7 +703,7 @@ hogl_bldr_texture& hogl_bldr_texture::set_mag_filter(hogl_filter_type type)
         return *this;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gltype);
+    glTexParameteri(m_bindTarget, GL_TEXTURE_MAG_FILTER, gltype);
     return *this;
 }
 
@@ -608,7 +733,7 @@ hogl_bldr_texture& hogl_bldr_texture::set_min_filter(hogl_filter_type type)
         break;
     }
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gltype);
+    glTexParameteri(m_bindTarget, GL_TEXTURE_MIN_FILTER, gltype);
     return *this;
 }
 

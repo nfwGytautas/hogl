@@ -57,6 +57,8 @@ hogl_obj_handle<hogl_texture> hdr;
 
 hogl_obj_handle<hogl_framebuffer> fbo;
 
+hogl_obj_handle<hogl_texture> envCubemap;
+
 struct pbr_samplers
 {
 	int irradianceMap = 0;
@@ -308,6 +310,38 @@ int test()
 
 	// Load HDR image
 	hdr.own(load_hdr_texture("res/hdr/newport_loft.hdr"));
+
+	// Create environment cube map
+	// We set the auto increment and then allocate 6 512x512 textures then set up wrapping and filters 
+	envCubemap = hogl_new_texture()
+		.add_texture()
+		.cslot_auto_increment(true)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.alloc(512, 512, hogl_texture_format::RGB16F)
+		.set_wrap(hogl_wrap_axis::X, hogl_wrap_type::EDGE_CLAMP)
+		.set_wrap(hogl_wrap_axis::Y, hogl_wrap_type::EDGE_CLAMP)
+		.set_wrap(hogl_wrap_axis::Z, hogl_wrap_type::EDGE_CLAMP)
+		.set_min_filter(hogl_filter_type::LINEAR_MIPMAP_LINEAR)
+		.set_mag_filter(hogl_filter_type::LINEAR)
+		.ptr();
+
+	// Setup cubemap view matrices, could be done in pure math functions but we will take advantage of the 1 abstraction layer
+	hogl_m44<float> captureProjection = hogl_perspective(90.0f, 1.0f, 0.1f, 10.0f);
+
+	hogl_m44<float> captureViews[] =
+	{
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(1.0f,  0.0f,  0.0f),  hogl_v3<float>(0.0f, -1.0f,  0.0f)),
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(-1.0f,  0.0f,  0.0f), hogl_v3<float>(0.0f, -1.0f,  0.0f)),
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(0.0f,  1.0f,  0.0f),  hogl_v3<float>(0.0f,  0.0f,  1.0f)),
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(0.0f, -1.0f,  0.0f),  hogl_v3<float>(0.0f,  0.0f, -1.0f)),
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(0.0f,  0.0f,  1.0f),  hogl_v3<float>(0.0f, -1.0f,  0.0f)),
+		hogl_look_at(hogl_v3<float>(0.0f, 0.0f, 0.0f), hogl_v3<float>(0.0f,  0.0f, -1.0f),  hogl_v3<float>(0.0f, -1.0f,  0.0f))
+	};
+
 
 	// For advanced rendering we will use hogl_render_object and hogl_render_draw_call objects
 	//hogl_render_object render_object;

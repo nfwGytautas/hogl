@@ -4,7 +4,7 @@
 #define HOGL_NSPACE_END }
 
 #define HOGL_NSPACE_BEGIN_L1 HOGL_NSPACE_BEGIN namespace al1 {
-#define HOGL_NSPACE_END_L2 HOGL_NSPACE_END }
+#define HOGL_NSPACE_END_L1 HOGL_NSPACE_END }
 
 #ifdef HOGL_EXPORT
 #define HOGL_API __declspec(dllexport)
@@ -223,3 +223,21 @@ typedef void (*hogl_ecb_mscroll)(void*, const hogl_e_mscroll*);
 typedef void (*hogl_ecb_key)(void*, const hogl_e_key*);
 
 HOGL_NSPACE_END
+
+
+#ifdef HOGL_INCLUDE_LEVEL_1
+
+HOGL_NSPACE_BEGIN_L1
+
+template<class T>
+class hogl_obj_handle;
+
+template<typename T>
+class hogl_v3;
+
+template<typename T>
+class hogl_m44;
+
+HOGL_NSPACE_END_L1
+
+#endif

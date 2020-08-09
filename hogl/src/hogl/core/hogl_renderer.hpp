@@ -101,7 +101,7 @@ private:
 	hogl_render_object* m_currentObject = nullptr;
 	hogl_mesh* m_currentMesh = nullptr;
 	hogl_shader* m_currentShader = nullptr;
-	std::array<hogl_texture*, HOGL_MAX_TEXTURE_SLOTS> m_currentTexture;
+	std::array<hogl_texture*, HOGL_MAX_TEXTURE_SLOTS> m_currentTexture = { nullptr };
 };
 
 /**

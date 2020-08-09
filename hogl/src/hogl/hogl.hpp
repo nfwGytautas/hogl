@@ -53,16 +53,24 @@
 // hogl render system
 #include "hogl/core/hogl_renderer.hpp"
 
-
 /**
  * Level 1 abstraction
+ *
+ * This abstraction level provides convenience functions and classes that make working with the hogl core
+ * more pleasant it doesn't introduce any complex classes, functions or structs, just provides wrappers around some
+ * additional libraries that aren't necessary, but are nice to have, like glm.
+ *
  * Included in this level:
  *	 + Object handles that allow for easier lifetime management of objects
+ *   + GLM math abstractions
 */
 
 #ifdef HOGL_INCLUDE_LEVEL_1
 
 // hogl object lifetime handle
 #include "hogl/alevel_1/hogl_object_handle.hpp"
+
+// hogl math abstraction
+#include "hogl/alevel_1/hogl_min_math.hpp"
 
 #endif

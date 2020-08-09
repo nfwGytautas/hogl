@@ -214,6 +214,36 @@ public:
 	hogl_bldr_texture& add_texture();
 
 	/**
+	 * @brief Marks the texture as a 3D cube map texture, further calls will act on the texture as if it was a cube map
+	*/
+	hogl_bldr_texture& set_cubemap();
+
+	/**
+	 * @brief Increment the internal texture slot by the specified step, this is mainly used for cube map textures
+	 * @param step The amount to increment by
+	*/
+	hogl_bldr_texture& increment_cslot(unsigned int step = 1);
+
+	/**
+	 * @brief Resets the internal texture slot to 0
+	*/
+	hogl_bldr_texture& reset_cslot();
+
+	/**
+	 * @brief Enables the auto incrementing of the internal texture slot 
+	 * @param value Value to set the flag to
+	*/
+	hogl_bldr_texture& cslot_auto_increment(bool value);
+
+	/**
+	 * @brief Allocate an empty texture array
+	 * @param width Width of the texture
+	 * @param height Height of the texture
+	 * @param format Texture format, one of hogl_texture_format values
+	*/
+	hogl_bldr_texture& alloc(unsigned int width, unsigned height, hogl_texture_format format);
+
+	/**
 	 * @brief Adds image data to the texture
 	 * @param image_data Data to add to the texture
 	*/
@@ -263,6 +293,10 @@ public:
 private:
 	hogl_texture* m_texture = nullptr;
 	bool m_hasTexture = false;
+	bool m_cubemap = false;
+	bool m_autoIncrement = false;
+	unsigned int m_internalSlot = 0;
+	unsigned int m_bindTarget = 0;
 };
 
 /**

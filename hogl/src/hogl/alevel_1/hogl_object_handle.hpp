@@ -105,4 +105,4 @@ private:
 	T* m_object = nullptr;
 };
 
-HOGL_NSPACE_END_L2
+HOGL_NSPACE_END_L1
