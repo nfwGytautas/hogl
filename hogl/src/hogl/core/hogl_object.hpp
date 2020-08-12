@@ -148,4 +148,13 @@ struct HOGL_API hogl_framebuffer
 */
 HOGL_API void hogl_ubo_data(hogl_ubo* ubo, void* data, size_t offset = 0, size_t size = 0);
 
+/**
+ * @brief Change the size and component of the specified framebuffer renderbuffer attachment, make sure that the fbo has a renderbuffer created (error will be logged)
+ * @param fbo Framebuffer with the renderbuffer to adjust
+ * @param component hogl_rbuffer_format value that specifies the renderbuffer components
+ * @param width New width of the buffer
+ * @param height New height of the buffer
+*/
+HOGL_API void hogl_adjust_rbo(hogl_framebuffer* fbo, hogl_rbuffer_format component, unsigned int width, unsigned int height);
+
 HOGL_NSPACE_END

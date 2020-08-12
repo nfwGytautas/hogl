@@ -86,22 +86,20 @@ void hogl_cs_renderer::bind_draw_call(hogl_render_draw_call* draw_call)
 	}
 
 	// Check what state to change
-	if (m_currentDrawCall != nullptr)
-	{
-		if (m_currentDrawCall->depth_test != draw_call->depth_test)
-		{
-			set_depth_func(draw_call->depth_test);
-		}
-		if (m_currentDrawCall->seamless_cubemap != draw_call->seamless_cubemap)
-		{
-			set_seamless_cubemap(draw_call->seamless_cubemap);
-		}
-	}
-	else
+	if (m_currentDrawCall == nullptr)
 	{
 		// Defaults
 		set_depth_func(hogl_render_depth::LESS);
 		set_seamless_cubemap(true);
+	}
+
+	if (m_currentDrawCall->depth_test != draw_call->depth_test)
+	{
+		set_depth_func(draw_call->depth_test);
+	}
+	if (m_currentDrawCall->seamless_cubemap != draw_call->seamless_cubemap)
+	{
+		set_seamless_cubemap(draw_call->seamless_cubemap);
 	}
 
 	m_currentDrawCall = draw_call;
@@ -261,6 +259,21 @@ void hogl_cs_renderer::set_seamless_cubemap(bool value)
 	}
 }
 
+void hogl_cs_renderer::adjust_viewport(unsigned int width, unsigned int height)
+{
+	glViewport(0, 0, width, height);
+}
+
+void hogl_cs_renderer::reset_draw_call()
+{
+	m_currentDrawCall = nullptr;
+}
+
+void hogl_cs_renderer::reset_object()
+{
+	m_currentObject = nullptr;
+}
+
 hogl_wnd_render_target::hogl_wnd_render_target(hogl_wnd* wnd)
 	: m_wnd(wnd), m_clearColor()
 {
@@ -309,6 +322,78 @@ void hogl_wnd_render_target::clear()
 void hogl_wnd_render_target::flush()
 {
 	glfwSwapBuffers((GLFWwindow*)m_wnd->native_window);
+}
+
+hogl_fbo_render_target::hogl_fbo_render_target(hogl_framebuffer* fbo)
+	: m_fbo(fbo)
+{
+}
+
+void hogl_fbo_render_target::set_clear_color(unsigned int r, unsigned int g, unsigned int b, unsigned int a)
+{
+	if (r <= 255)
+	{
+		m_clearColor[0] = (float)r / 255;
+	}
+
+	if (g <= 255)
+	{
+		m_clearColor[1] = (float)g / 255;
+	}
+
+	if (b <= 255)
+	{
+		m_clearColor[2] = (float)b / 255;
+	}
+
+	if (a <= 255)
+	{
+		m_clearColor[3] = (float)a / 255;
+	}
+}
+
+void hogl_fbo_render_target::attach_texture(hogl_texture* texture)
+{
+	m_textureAttachment = texture;
+}
+
+void hogl_fbo_render_target::set_cslot(unsigned int cslot)
+{
+	if (cslot > 6)
+	{
+		HOGL_LOG_ERROR("FBO render target cslot value " << cslot << " is not in the range of [0-6]");
+		return;
+	}
+
+	if (m_textureAttachment == nullptr)
+	{
+		HOGL_LOG_ERROR("Unattached texture when changing the FBO render target cslot");
+		return;
+	}
+
+	// We assume that the framebuffer is bound, because targets are not valid until they are not assigned a renderer
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + cslot, m_textureAttachment->texture_id, 0);
+}
+
+bool hogl_fbo_render_target::valid()
+{
+	return m_fbo != nullptr && m_fbo->fbo_id != 0;
+}
+
+void hogl_fbo_render_target::bind()
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, m_fbo->fbo_id);
+}
+
+void hogl_fbo_render_target::clear()
+{
+	glClearColor(m_clearColor[0], m_clearColor[1], m_clearColor[2], m_clearColor[3]);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void hogl_fbo_render_target::flush()
+{
+	// No flushing needed for fbo
 }
 
 HOGL_NSPACE_END

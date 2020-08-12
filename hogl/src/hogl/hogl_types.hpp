@@ -174,6 +174,7 @@ class hogl_cs_loader;
 
 class hogl_i_render_target;
 class hogl_wnd_render_target;
+class hogl_fbo_render_target;
 
 class hogl_bldr_mesh;
 class hogl_bldr_shader;

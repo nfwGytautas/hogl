@@ -94,6 +94,25 @@ private:
 	 * @param value 
 	*/
 	void set_seamless_cubemap(bool value);
+
+	/**
+	 * @brief Adjust the size of the rendering viewport
+	 * @param width New width of the viewport
+	 * @param height New height of the viewport
+	*/
+	void adjust_viewport(unsigned int width, unsigned int height);
+
+	/**
+	 * @brief Force the next bound draw call to override the current one.
+	 * This function is used when the currently bound draw call is changed.
+	*/
+	void reset_draw_call();
+
+	/**
+	 * @brief Force the next bound object to override the current one
+	 * This function is used when the currently bound object is changed.
+	*/
+	void reset_object();
 private:
 	hogl_i_render_target* m_target = nullptr;
 	
@@ -166,7 +185,57 @@ public:
 
 	virtual void flush() override;
 private:
-	hogl_wnd* m_wnd;
+	hogl_wnd* m_wnd = nullptr;
+	float m_clearColor[4];
+};
+
+/**
+ * @brief Render target where the target is a framebuffer, for more info check the hogl_i_render_target class,
+ * this target is created using a hogl framebuffer, and the target is valid as long as the framebuffer is valid itself
+*/
+class HOGL_API hogl_fbo_render_target : public hogl_i_render_target
+{
+public:
+	/**
+	 * @brief Create a new instance of framebuffer rendering target
+	 * @param fbo Framebuffer to render to
+	*/
+	hogl_fbo_render_target(hogl_framebuffer* fbo);
+
+	/**
+	 * @brief Set the clear color of the render target, channel values are from 0 to 255,
+	 * other values keep the color unchanged, e.g. in order to only change the red channel just write 256 or more to g, b and a channels
+	 * @param r Red channel value of the clear color
+	 * @param g Green channel value of the clear color
+	 * @param b Blue channel value of the clear color
+	 * @param a Alpha channel value of the clear color
+	*/
+	void set_clear_color(unsigned int r, unsigned int g, unsigned int b, unsigned int a);
+	
+	/**
+	 * @brief Attach a texture to the framebuffer
+	 * @param texture Texture to attach
+	*/
+	void attach_texture(hogl_texture* texture);
+
+	/**
+	 * @brief This functions sets the attachment of the framebuffer to be a single side of a texture, so make sure that the attached texture
+	 * is a cube map before using this function
+	 * @param cslot Cube map side of the texture from 0 - 6
+	*/
+	void set_cslot(unsigned int cslot);
+
+	// Inherited via hogl_i_render_target
+	virtual bool valid() override;
+
+	virtual void bind() override;
+
+	virtual void clear() override;
+
+	virtual void flush() override;
+private:
+	hogl_framebuffer* m_fbo = nullptr;
+	hogl_texture* m_textureAttachment = nullptr;
 	float m_clearColor[4];
 };
 

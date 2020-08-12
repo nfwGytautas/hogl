@@ -73,4 +73,7 @@
 // hogl math abstraction
 #include "hogl/alevel_1/hogl_min_math.hpp"
 
+// hogl geometry generation functions
+#include "hogl/alevel_1/hogl_geometry_gen.hpp"
+
 #endif

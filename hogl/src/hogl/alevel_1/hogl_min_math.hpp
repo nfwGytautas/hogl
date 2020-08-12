@@ -108,7 +108,7 @@ private:
  * @param up Vector showing the direction where the up direction is
  * @return View matrix
 */
-hogl_m44<float> hogl_look_at(const hogl_v3<float>& eye, const hogl_v3<float>& target, const hogl_v3<float>& up);
+HOGL_API hogl_m44<float> hogl_look_at(const hogl_v3<float>& eye, const hogl_v3<float>& target, const hogl_v3<float>& up);
 
 /**
  * @brief Creates a perspective matrix
@@ -118,6 +118,6 @@ hogl_m44<float> hogl_look_at(const hogl_v3<float>& eye, const hogl_v3<float>& ta
  * @param far Far clipping plain value
  * @return Perspective matrix
 */
-hogl_m44<float> hogl_perspective(const float& fov, const float& aspectRatio, const float& near, const float& far);
+HOGL_API hogl_m44<float> hogl_perspective(const float& fov, const float& aspectRatio, const float& near, const float& far);
 
 HOGL_NSPACE_END_L1
