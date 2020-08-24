@@ -21,6 +21,12 @@ public:
 	void update();
 
 	/**
+	 * @brief Sets window system logging configuration pointer
+	 * @param cfg Pointer to configuration settings
+	*/
+	void set_log_cfg_ptr(hogl_log_config* cfg);
+
+	/**
 	 * @brief Creates a hogl window
 	 * @return hogl_wnd instance or null if there was an error
 	*/
@@ -42,6 +48,7 @@ private:
 	 * @brief Windows created by the manager
 	*/
 	std::vector<hogl_wnd*> m_windows;
+	hogl_log_config* m_logConfig = nullptr;
 };
 
 /**

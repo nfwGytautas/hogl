@@ -100,6 +100,20 @@ public:
 		m_object = object;
 		return *this;
 	}
+
+	/**
+	 * Assignment operator used to assign handle, after this call the object is owned
+	 * @param object Object to wrap
+	 * @return This handle
+	 */
+	hogl_obj_handle<T>& operator=(const hogl_obj_handle<T>& hndl)
+	{
+		m_owned = true;
+		m_object = hndl.m_object;
+		hndl.m_owned = false;
+		hndl.m_object = nullptr;
+		return *this;
+	}
 private:
 	bool m_owned = true;
 	T* m_object = nullptr;

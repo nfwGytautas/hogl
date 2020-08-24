@@ -47,6 +47,26 @@ public:
 	 * @brief Flushes current contents to the flush target
 	*/
 	void flush();
+
+	/**
+	 * [TODO] Transfer to draw_call
+	 * @brief Adjust the size of the rendering viewport
+	 * @param width New width of the viewport
+	 * @param height New height of the viewport
+	*/
+	void adjust_viewport(unsigned int width, unsigned int height);
+
+	/**
+	 * @brief Force the next bound draw call to override the current one.
+	 * This function is used when the currently bound draw call is changed.
+	*/
+	void reset_draw_call();
+
+	/**
+	 * @brief Force the next bound object to override the current one
+	 * This function is used when the currently bound object is changed.
+	*/
+	void reset_object();
 private:
 	/**
 	 * @brief Bind the specified draw call
@@ -94,25 +114,6 @@ private:
 	 * @param value 
 	*/
 	void set_seamless_cubemap(bool value);
-
-	/**
-	 * @brief Adjust the size of the rendering viewport
-	 * @param width New width of the viewport
-	 * @param height New height of the viewport
-	*/
-	void adjust_viewport(unsigned int width, unsigned int height);
-
-	/**
-	 * @brief Force the next bound draw call to override the current one.
-	 * This function is used when the currently bound draw call is changed.
-	*/
-	void reset_draw_call();
-
-	/**
-	 * @brief Force the next bound object to override the current one
-	 * This function is used when the currently bound object is changed.
-	*/
-	void reset_object();
 private:
 	hogl_i_render_target* m_target = nullptr;
 	
@@ -225,6 +226,17 @@ public:
 	*/
 	void set_cslot(unsigned int cslot);
 
+	/**
+	 * @brief Set the mip-map level of the attached texture
+	 * @param mip Mip-map level
+	*/
+	void set_mip(unsigned int mip);
+
+	/**
+	 * @brief Maps the attached texture to GPU memory
+	*/
+	void map();
+
 	// Inherited via hogl_i_render_target
 	virtual bool valid() override;
 
@@ -237,6 +249,7 @@ private:
 	hogl_framebuffer* m_fbo = nullptr;
 	hogl_texture* m_textureAttachment = nullptr;
 	float m_clearColor[4];
+	unsigned int m_mip = 0;
 };
 
 /**
@@ -284,6 +297,11 @@ struct HOGL_API hogl_render_draw_call
 	 * @brief If this value is 0 then the object will rendered normally, if any other value, then instancing will be used 
 	*/
 	size_t instance_count = 0;
+
+	/**
+	 * @brief Render mode for this draw call
+	*/
+	hogl_render_mode render_mode = hogl_render_mode::TRIANGLES;
 };
 
 HOGL_NSPACE_END

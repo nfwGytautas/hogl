@@ -121,6 +121,11 @@ struct HOGL_API hogl_texture
 	 * @brief Texture slot
 	*/
 	unsigned int slot = 0;
+
+	/**
+	 * @brief Boolean flag if texture is a cubemap or not
+	*/
+	bool cubemap = false;
 };
 
 /**

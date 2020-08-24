@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in vec3 aNormal;
@@ -7,9 +7,22 @@ out vec2 TexCoords;
 out vec3 WorldPos;
 out vec3 Normal;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+layout (std140, binding = 7) uniform matrices
+{
+	uniform mat4 projection;
+	uniform mat4 view;
+};
+
+layout (std140, binding = 5) uniform pbr_data
+{
+    uniform mat4 model;
+
+    // lights
+    uniform vec4 lightPositions[4];
+    uniform vec4 lightColors[4];
+
+    uniform vec4 camPos;
+};
 
 void main()
 {

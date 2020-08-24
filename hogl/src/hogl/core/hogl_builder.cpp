@@ -58,6 +58,33 @@ GLenum get_usage(hogl_vbo_usage usage)
     return 0;
 }
 
+GLenum hogl_format_to_gl(hogl_texture_format format)
+{
+    switch (format)
+    {
+    case hogl_texture_format::RED:
+        return GL_RED;
+    case hogl_texture_format::RG:
+        return GL_RG;
+    case hogl_texture_format::RGB:
+        return GL_RGB;
+    case hogl_texture_format::RGBA:
+        return GL_RGBA;
+    case hogl_texture_format::R16F:
+        return GL_R16F;
+    case hogl_texture_format::RGB16F:
+        return GL_RGB16F;
+    case hogl_texture_format::RGBA16F:
+        return GL_RGBA16F;
+    case hogl_texture_format::NONE:
+        HOGL_LOG_ERROR("Unspecified texture format!");
+        return 0;
+    default:
+        HOGL_LOG_ERROR("Incompatible format for a normal image!");
+        return 0;
+    }
+}
+
 std::pair<GLenum, GLenum> get_rbo_params(hogl_rbuffer_format format) 
 {
     switch (format)
@@ -200,8 +227,8 @@ hogl_bldr_mesh& hogl_bldr_mesh::set_vbo_ap(unsigned int slot, hogl_ap_type etype
 
     unsigned gl_type = get_type_element(etype);
 
-    glVertexAttribPointer(slot, (GLint)count, gl_type, GL_FALSE, stride, (void*)offset);
     glEnableVertexAttribArray(slot);
+    glVertexAttribPointer(slot, (GLint)count, gl_type, GL_FALSE, stride, (void*)offset);
 
     return *this;
 }
@@ -396,6 +423,13 @@ hogl_bldr_ubo& hogl_bldr_ubo::allocate(size_t size)
     m_ubo->allocated = size;
     glBindBuffer(GL_UNIFORM_BUFFER, m_ubo->ubo_id);
     glBufferData(GL_UNIFORM_BUFFER, m_ubo->allocated, NULL, GL_STATIC_DRAW);
+
+    // Alignment issue 
+    if (size % 4 != 0)
+    {
+        HOGL_LOG_WARN("UBO size is not divisible by modulo 4, and will most likely cause improper variable pass.");
+    }
+
     return *this;
 }
 
@@ -437,7 +471,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_texture()
 
 hogl_bldr_texture& hogl_bldr_texture::set_cubemap()
 {
-    m_cubemap = true;
+    m_texture->cubemap = true;
     m_bindTarget = GL_TEXTURE_CUBE_MAP;
     return *this;
 }
@@ -460,7 +494,7 @@ hogl_bldr_texture& hogl_bldr_texture::cslot_auto_increment(bool value)
     return *this;
 }
 
-hogl_bldr_texture& hogl_bldr_texture::alloc(unsigned int width, unsigned height, hogl_texture_format format)
+hogl_bldr_texture& hogl_bldr_texture::alloc(unsigned int width, unsigned height, hogl_texture_format format, hogl_texture_format storage_format)
 {
     if (!m_hasTexture)
     {
@@ -497,6 +531,11 @@ hogl_bldr_texture& hogl_bldr_texture::alloc(unsigned int width, unsigned height,
         displayFormat = GL_RED;
         type = GL_FLOAT;
         break;
+    case hogl_texture_format::RG16F:
+        internalFormat = GL_RG16F;
+        displayFormat = GL_RG;
+        type = GL_FLOAT;
+        break;
     case hogl_texture_format::RGB16F:
         internalFormat = GL_RGB16F;
         displayFormat = GL_RGB;
@@ -515,7 +554,7 @@ hogl_bldr_texture& hogl_bldr_texture::alloc(unsigned int width, unsigned height,
         return *this;
     }
 
-    if (!m_cubemap)
+    if (!m_texture->cubemap)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, displayFormat, type, nullptr);
     }
@@ -563,7 +602,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_image(hogl_loader_image<unsigned char>
         return *this;
     }
 
-    if (!m_cubemap) 
+    if (!m_texture->cubemap)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, format, GL_UNSIGNED_BYTE, image_data->data.get());
     }
@@ -616,7 +655,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_hdr(hogl_loader_image<float>* image_da
         return *this;
     }
 
-    if (!m_cubemap)
+    if (!m_texture->cubemap)
     {
         glTexImage2D(GL_TEXTURE_2D, 0, format, image_data->width, image_data->height, 0, displayFormat, GL_FLOAT, image_data->data.get());
     }
@@ -635,6 +674,7 @@ hogl_bldr_texture& hogl_bldr_texture::add_hdr(hogl_loader_image<float>* image_da
 
 hogl_bldr_texture& hogl_bldr_texture::generate_mipmap()
 {
+    glBindTexture(m_bindTarget, m_texture->texture_id);
     glGenerateMipmap(m_bindTarget);
     return *this;
 }

@@ -240,8 +240,9 @@ public:
 	 * @param width Width of the texture
 	 * @param height Height of the texture
 	 * @param format Texture format, one of hogl_texture_format values
+	 * @param storage_format Internal storage format, NONE by default which will automatically figure out the storage format
 	*/
-	hogl_bldr_texture& alloc(unsigned int width, unsigned height, hogl_texture_format format);
+	hogl_bldr_texture& alloc(unsigned int width, unsigned height, hogl_texture_format format, hogl_texture_format storage_format = hogl_texture_format::NONE);
 
 	/**
 	 * @brief Adds image data to the texture
@@ -293,7 +294,6 @@ public:
 private:
 	hogl_texture* m_texture = nullptr;
 	bool m_hasTexture = false;
-	bool m_cubemap = false;
 	bool m_autoIncrement = false;
 	unsigned int m_internalSlot = 0;
 	unsigned int m_bindTarget = 0;

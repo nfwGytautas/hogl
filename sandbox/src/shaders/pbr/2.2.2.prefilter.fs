@@ -1,9 +1,13 @@
-#version 330 core
+#version 420 core
 out vec4 FragColor;
 in vec3 WorldPos;
 
 uniform samplerCube environmentMap;
-uniform float roughness;
+
+layout (std140, binding = 4) uniform prefilter
+{
+    uniform float roughness;
+};
 
 const float PI = 3.14159265359;
 // ----------------------------------------------------------------------------

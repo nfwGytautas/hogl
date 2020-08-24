@@ -18,6 +18,17 @@
 HOGL_NSPACE_BEGIN
 
 /**
+ * @brief Logging levels for OpenGL messages
+*/
+enum class hogl_gl_log_level
+{
+	ALL,		// All messages will be displayed
+	WARN,		// Only warnings and errors will be displayed
+	ERR,		// Only errors will be displayed
+	DISABLE		// Disable all messages
+};
+
+/**
  * @brief hogl event modifier, representing if any special keys (ctrl, alt, etc.) were pressed during the event
 */
 enum class hogl_e_modifier
@@ -104,9 +115,11 @@ enum class hogl_texture_format
 {
 	NONE,
 	RED,
+	RG,
 	RGB,
 	RGBA,
 	R16F,
+	RG16F,
 	RGB16F,
 	RGBA16F,
 };
@@ -158,6 +171,15 @@ enum class hogl_rbuffer_format
 	si8
 };
 
+/**
+ * @brief hogl supported render modes
+*/
+enum class hogl_render_mode
+{
+	TRIANGLES,
+	TRIANGLE_STRIP
+};
+
 // Constants
 
 /**
@@ -180,6 +202,8 @@ class hogl_bldr_mesh;
 class hogl_bldr_shader;
 class hogl_bldr_ubo;
 class hogl_bldr_texture;
+
+struct hogl_log_config;
 
 struct hogl_wnd;
 
@@ -234,7 +258,13 @@ template<class T>
 class hogl_obj_handle;
 
 template<typename T>
+class hogl_v2;
+
+template<typename T>
 class hogl_v3;
+
+template<typename T>
+class hogl_v4;
 
 template<typename T>
 class hogl_m44;

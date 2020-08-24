@@ -33,6 +33,19 @@ struct HOGL_API hogl_context {
 	 * @brief External asset loading system used by hogl to provide mesh, audio, texture loading
 	*/
 	hogl_cs_loader* loader;
+
+	/**
+	 * @brief Handle to an instance of the logging configuration, updating this will update every system
+	*/
+	hogl_log_config* log_handle;
+};
+
+/**
+ * @brief hogl library logging configuration
+*/
+struct HOGL_API hogl_log_config
+{
+	hogl_gl_log_level gl_log = hogl_gl_log_level::ALL;
 };
 
 /**
@@ -41,6 +54,12 @@ struct HOGL_API hogl_context {
  * @return hogl_context instance
 */
 HOGL_API hogl_context* hogl_init();
+
+/**
+ * @brief Returns the current time in seconds, used to calculate frame delta time
+ * @return GLFW seconds
+*/
+HOGL_API float hogl_system_clock();
 
 /**
  * @brief Shuts down the hogl library, this function should only be called once, calling twice is undefined

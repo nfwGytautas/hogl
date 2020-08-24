@@ -30,6 +30,7 @@ void hogl_cs_renderer::begin_frame()
 	if (m_target != nullptr && m_target->valid())
 	{
 		// Clear the target
+		m_target->bind();
 		m_target->clear();
 	}
 }
@@ -89,17 +90,19 @@ void hogl_cs_renderer::bind_draw_call(hogl_render_draw_call* draw_call)
 	if (m_currentDrawCall == nullptr)
 	{
 		// Defaults
-		set_depth_func(hogl_render_depth::LESS);
-		set_seamless_cubemap(true);
-	}
-
-	if (m_currentDrawCall->depth_test != draw_call->depth_test)
-	{
 		set_depth_func(draw_call->depth_test);
-	}
-	if (m_currentDrawCall->seamless_cubemap != draw_call->seamless_cubemap)
-	{
 		set_seamless_cubemap(draw_call->seamless_cubemap);
+	}
+	else
+	{
+		if (m_currentDrawCall->depth_test != draw_call->depth_test)
+		{
+			set_depth_func(draw_call->depth_test);
+		}
+		if (m_currentDrawCall->seamless_cubemap != draw_call->seamless_cubemap)
+		{
+			set_seamless_cubemap(draw_call->seamless_cubemap);
+		}
 	}
 
 	m_currentDrawCall = draw_call;
@@ -121,8 +124,8 @@ void hogl_cs_renderer::bind_object(hogl_render_object* object)
 	}
 
 	m_currentObject = object;
-	bind_mesh(object->mesh);
 	bind_shader(object->shader);
+	bind_mesh(object->mesh);
 
 	for (hogl_texture* texture : object->textures)
 	{
@@ -135,12 +138,6 @@ void hogl_cs_renderer::bind_mesh(hogl_mesh* mesh)
 	if (mesh == nullptr)
 	{
 		HOGL_LOG_ERROR("Trying to bind a nullptr mesh!");
-		return;
-	}
-
-	// Check if there is an actual need to bind
-	if (m_currentMesh == mesh)
-	{
 		return;
 	}
 
@@ -161,12 +158,6 @@ void hogl_cs_renderer::bind_shader(hogl_shader* shader)
 		return;
 	}
 
-	// Check if there is an actual need to bind
-	if (m_currentShader == shader)
-	{
-		return;
-	}
-
 	m_currentShader = shader;
 	glUseProgram(m_currentShader->shader_id);
 }
@@ -179,15 +170,17 @@ void hogl_cs_renderer::bind_texture(hogl_texture* texture)
 		return;
 	}
 
-	// Check if there is an actual need to bind
-	if (m_currentTexture[texture->slot] == texture)
-	{
-		return;
-	}
-
 	m_currentTexture[texture->slot] = texture;
 	glActiveTexture(GL_TEXTURE0 + texture->slot);
-	glBindTexture(GL_TEXTURE_2D, texture->texture_id);
+
+	if (texture->cubemap)
+	{
+		glBindTexture(GL_TEXTURE_CUBE_MAP, texture->texture_id);
+	}
+	else
+	{
+		glBindTexture(GL_TEXTURE_2D, texture->texture_id);
+	}
 }
 
 void hogl_cs_renderer::render_single()
@@ -200,11 +193,27 @@ void hogl_cs_renderer::render_single()
 
 	if (m_currentMesh->ebo_id == 0)
 	{
-		glDrawArrays(GL_TRIANGLES, 0, m_currentMesh->vertice_count);
+		switch (m_currentDrawCall->render_mode)
+		{
+		case hogl_render_mode::TRIANGLES:
+			glDrawArrays(GL_TRIANGLES, 0, m_currentMesh->vertice_count);
+			break;
+		case hogl_render_mode::TRIANGLE_STRIP:
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, m_currentMesh->vertice_count);
+			break;
+		}
 	}
 	else
 	{
-		glDrawElements(GL_TRIANGLES, m_currentMesh->vertice_count, GL_UNSIGNED_INT, 0);
+		switch (m_currentDrawCall->render_mode)
+		{
+		case hogl_render_mode::TRIANGLES:
+			glDrawElements(GL_TRIANGLES, m_currentMesh->vertice_count, GL_UNSIGNED_INT, 0);
+			break;
+		case hogl_render_mode::TRIANGLE_STRIP:
+			glDrawElements(GL_TRIANGLE_STRIP, m_currentMesh->vertice_count, GL_UNSIGNED_INT, 0);
+			break;
+		}
 	}
 }
 
@@ -311,6 +320,7 @@ void hogl_wnd_render_target::bind()
 {
 	// Make the window as the current OpenGL context
 	glfwMakeContextCurrent((GLFWwindow*)m_wnd->native_window);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void hogl_wnd_render_target::clear()
@@ -372,7 +382,23 @@ void hogl_fbo_render_target::set_cslot(unsigned int cslot)
 	}
 
 	// We assume that the framebuffer is bound, because targets are not valid until they are not assigned a renderer
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + cslot, m_textureAttachment->texture_id, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + cslot, m_textureAttachment->texture_id, m_mip);
+}
+
+void hogl_fbo_render_target::set_mip(unsigned int mip)
+{
+	m_mip = mip;
+}
+
+void hogl_fbo_render_target::map()
+{
+	if (m_textureAttachment == nullptr)
+	{
+		HOGL_LOG_ERROR("Unattached texture when mapping the FBO render target");
+		return;
+	}
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_textureAttachment->texture_id, 0);
 }
 
 bool hogl_fbo_render_target::valid()

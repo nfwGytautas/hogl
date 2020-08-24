@@ -11,7 +11,7 @@ HOGL_NSPACE_BEGIN
 
 hogl_cs_loader::hogl_cs_loader()
 {
-    stbi_set_flip_vertically_on_load(true);
+    
 }
 
 std::string hogl_cs_loader::read_text_file(const char* file)
@@ -64,6 +64,7 @@ void hogl_cs_loader::load_image(hogl_loader_image<unsigned char>* image, const c
 
 void hogl_cs_loader::load_hdr(hogl_loader_image<float>* image, const char* file)
 {
+    stbi_set_flip_vertically_on_load(true);
     int components;
     float* data = stbi_loadf(file, &image->width, &image->height, &components, 0);
 

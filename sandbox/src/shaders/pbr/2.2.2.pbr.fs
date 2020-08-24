@@ -1,8 +1,13 @@
-#version 330 core
+#version 420 core
 out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 WorldPos;
 in vec3 Normal;
+
+// IBL
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
 
 // material parameters
 uniform sampler2D albedoMap;
@@ -11,16 +16,16 @@ uniform sampler2D metallicMap;
 uniform sampler2D roughnessMap;
 uniform sampler2D aoMap;
 
-// IBL
-uniform samplerCube irradianceMap;
-uniform samplerCube prefilterMap;
-uniform sampler2D brdfLUT;
+layout (std140, binding = 5) uniform pbr_data
+{
+    uniform mat4 model;
 
-// lights
-uniform vec3 lightPositions[4];
-uniform vec3 lightColors[4];
+    // lights
+    uniform vec4 lightPositions[4];
+    uniform vec4 lightColors[4];
 
-uniform vec3 camPos;
+    uniform vec4 camPos;
+};
 
 const float PI = 3.14159265359;
 // ----------------------------------------------------------------------------
@@ -100,7 +105,7 @@ void main()
        
     // input lighting data
     vec3 N = getNormalFromMap();
-    vec3 V = normalize(camPos - WorldPos);
+    vec3 V = normalize(camPos.xyz - WorldPos);
     vec3 R = reflect(-V, N); 
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
@@ -113,11 +118,11 @@ void main()
     for(int i = 0; i < 4; ++i) 
     {
         // calculate per-light radiance
-        vec3 L = normalize(lightPositions[i] - WorldPos);
+        vec3 L = normalize(lightPositions[i].xyz - WorldPos);
         vec3 H = normalize(V + L);
-        float distance = length(lightPositions[i] - WorldPos);
+        float distance = length(lightPositions[i].xyz - WorldPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = lightColors[i] * attenuation;
+        vec3 radiance = lightColors[i].xyz * attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   

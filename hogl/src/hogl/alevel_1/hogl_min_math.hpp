@@ -11,6 +11,62 @@
 HOGL_NSPACE_BEGIN_L1
 
 /**
+ * @brief Vector of 2 T components
+ * @tparam T Component type
+*/
+template<typename T>
+class hogl_v2
+{
+public:
+	/**
+	 * @brief Create an empty float vector
+	*/
+	hogl_v2()
+		: m_values{ 0, 0 }
+	{}
+
+	/**
+	 * @brief Create an initialized float vector
+	 * @param x X component value of the vector
+	 * @param y Y component	value of the vector
+	*/
+	hogl_v2(T x, T y)
+		: m_values{ x, y }
+	{}
+
+	/**
+	 * @brief Returns the values of the vector as a constant array
+	 * @return const pointer to array of size 2
+	*/
+	inline const T* ptr_const() const
+	{
+		return m_values.data();
+	}
+
+	/**
+	 * @brief Returns the values of the vector as a mutable array
+	 * @return Pointer to array of size 2
+	*/
+	inline T* ptr_mut()
+	{
+		return m_values.data();
+	}
+
+	/**
+	 * @brief Add operator
+	 * @param v Vector to add
+	*/
+	hogl_v2<T> operator+(const hogl_v2<T>& v) {
+		return hogl_v2<T>(
+			m_values[0] + v.m_values[0],
+			m_values[1] + v.m_values[1],
+		);
+	}
+private:
+	std::array<T, 2> m_values;
+};
+
+/**
  * @brief Vector of 3 T components
  * @tparam T Component type
 */
@@ -52,8 +108,80 @@ public:
 	{
 		return m_values.data();
 	}
+
+	/**
+	 * @brief Add operator
+	 * @param v Vector to add
+	*/
+	hogl_v3<T> operator+(const hogl_v3<T>& v) {
+		return hogl_v3<T>(
+			m_values[0] + v.m_values[0],
+			m_values[1] + v.m_values[1],
+			m_values[2] + v.m_values[2]
+		);
+	}
 private:
 	std::array<T, 3> m_values;
+};
+
+/**
+ * @brief Vector of 4 T components
+ * @tparam T Component type
+*/
+template<typename T>
+class hogl_v4
+{
+public:
+	/**
+	 * @brief Create an empty float vector
+	*/
+	hogl_v4()
+		: m_values{ 0, 0, 0, 0 }
+	{}
+
+	/**
+	 * @brief Create an initialized float vector
+	 * @param x X component value of the vector
+	 * @param y Y component	value of the vector
+	 * @param z Z component value of the vector
+	 * @param w W component value of the vector
+	*/
+	hogl_v4(T x, T y, T z, T w)
+		: m_values{ x, y, z, w }
+	{}
+
+	/**
+	 * @brief Returns the values of the vector as a constant array
+	 * @return const pointer to array of size 4
+	*/
+	inline const T* ptr_const() const
+	{
+		return m_values.data();
+	}
+
+	/**
+	 * @brief Returns the values of the vector as a mutable array
+	 * @return Pointer to array of size 4
+	*/
+	inline T* ptr_mut()
+	{
+		return m_values.data();
+	}
+
+	/**
+	 * @brief Add operator
+	 * @param v Vector to add
+	*/
+	hogl_v4<T> operator+(const hogl_v4<T>& v) {
+		return hogl_v3<T>(
+			m_values[0] + v.m_values[0],
+			m_values[1] + v.m_values[1],
+			m_values[2] + v.m_values[2],
+			m_values[3] + v.m_values[3]
+			);
+	}
+private:
+	std::array<T, 4> m_values;
 };
 
 /**
@@ -102,6 +230,12 @@ private:
 };
 
 /**
+ * @brief Generates an empty hogl_m44 identity matrix
+ * @return Identity matrix
+*/
+HOGL_API hogl_m44<float> hogl_m44_empty();
+
+/**
  * @brief Generate a view matrix that transforms coordinates in such a way that it the eye looks at the target 
  * @param eye Position of the eye or camera
  * @param target Position of the target or object we are looking at
@@ -119,5 +253,33 @@ HOGL_API hogl_m44<float> hogl_look_at(const hogl_v3<float>& eye, const hogl_v3<f
  * @return Perspective matrix
 */
 HOGL_API hogl_m44<float> hogl_perspective(const float& fov, const float& aspectRatio, const float& near, const float& far);
+
+/**
+ * @brief Translate the specified matrix by a value vector
+ * @param matrix Matrix to translate
+ * @param value Value to translate by
+ * @return Translated matrix
+*/
+HOGL_API hogl_m44<float> hogl_translate(const hogl_m44<float>& matrix, const hogl_v3<float> value);
+
+/**
+ * @brief Scale the specified matrix by a value vector
+ * @param matrix Matrix to translate
+ * @param value Value to scale by
+ * @return Scaled matrix
+*/
+HOGL_API hogl_m44<float> hogl_scale(const hogl_m44<float>& matrix, const hogl_v3<float> value);
+
+/**
+ * @brief Pad a 3 component vector to 4 component vector
+ * @tparam T Type of the vector
+ * @param vec Vector to pad
+ * @return Vector of 4 components
+*/
+template<typename T>
+hogl_v4<T> hogl_pad_v3(const hogl_v3<T>& vec)
+{
+	return hogl_v4<T>(vec.ptr_const()[0], vec.ptr_const()[1], vec.ptr_const()[2], {});
+}
 
 HOGL_NSPACE_END_L1

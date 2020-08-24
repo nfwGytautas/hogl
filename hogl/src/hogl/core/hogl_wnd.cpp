@@ -6,20 +6,33 @@
 #include <gl/glfw3.h>
 
 #include "hogl/core/hogl_input.hpp"
+#include "hogl/core/hogl_context.hpp"
 
 HOGL_NSPACE_BEGIN
 
 void GLAPIENTRY gl_error_cb(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userPointer)
 {
+	hogl_gl_log_level logLevel = hogl_gl_log_level::ALL;
+
+	if (userPointer != nullptr)
+	{
+		logLevel = ((hogl_log_config*)userPointer)->gl_log;
+	}
+
+	if (logLevel == hogl_gl_log_level::DISABLE)
+	{
+		return;
+	}
+
 	if (type == GL_DEBUG_TYPE_ERROR)
 	{
 		std::cout << "[hogl:error] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
 	}
-	else if (type == GL_DEBUG_TYPE_OTHER)
+	else if (type == GL_DEBUG_TYPE_OTHER && logLevel == hogl_gl_log_level::ALL)
 	{
 		std::cout << "[hogl:info] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
 	}
-	else
+	else if (logLevel == hogl_gl_log_level::WARN)
 	{
 		std::cout << "[hogl:warn] \n\tSeverity: " << severity << "\n\tMessage: '" << message << "'\n";
 	}
@@ -66,6 +79,11 @@ void hogl_cs_wndmanager::update()
 	}
 }
 
+void hogl_cs_wndmanager::set_log_cfg_ptr(hogl_log_config* cfg)
+{
+	m_logConfig = cfg;
+}
+
 hogl_wnd* hogl_cs_wndmanager::create()
 {
 	hogl_wnd* pWnd;
@@ -74,7 +92,7 @@ hogl_wnd* hogl_cs_wndmanager::create()
 	std::cout << "[hogl:info] Creating a hogl window\n";
 
 	// Create window and set it as current OpenGL context
-	window = glfwCreateWindow(1280, 920, "hogl", NULL, NULL);
+	window = glfwCreateWindow(1280, 720, "hogl", NULL, NULL);
 	glfwMakeContextCurrent(window);
 
 	if (window == NULL)
@@ -93,7 +111,7 @@ hogl_wnd* hogl_cs_wndmanager::create()
 	// OpenGL error handling
 #ifdef _DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(gl_error_cb, 0);
+	glDebugMessageCallback(gl_error_cb, m_logConfig);
 #endif
 
 	// Create hogl window

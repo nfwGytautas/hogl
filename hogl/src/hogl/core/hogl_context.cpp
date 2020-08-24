@@ -43,14 +43,22 @@ hogl_context* hogl_init()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	pContext = new hogl_context();
+	pContext->log_handle = new hogl_log_config();
 	pContext->window_manager = new hogl_cs_wndmanager();
 	pContext->input_system = new hogl_cs_input();
 	pContext->renderer = new hogl_cs_renderer();
 	pContext->loader = new hogl_cs_loader();
 
+	pContext->window_manager->set_log_cfg_ptr(pContext->log_handle);
+
 	std::cout << "[hogl:info] hogl initialized\n";
 
 	return pContext;
+}
+
+float hogl_system_clock()
+{
+	return glfwGetTime();
 }
 
 void hogl_shutdown(hogl_context*& context)
@@ -64,6 +72,7 @@ void hogl_shutdown(hogl_context*& context)
 		delete context->window_manager;
 		delete context->renderer;
 		delete context->loader;
+		delete context->log_handle;
 
 		delete context;
 		context = nullptr;
