@@ -10,10 +10,19 @@ void errorFn(const char* msg) {
 }
 
 int main(int argc, char** argv) {
-	hogl_log_error("error");
-	hogl_log_warn("warning");
-	hogl_log_info("info");
-	hogl_log_trace("trace");
+	hogl_wnd* hwindow = NULL;
+
+	// Initialize hogl
+	if (hogl_init() != HOGL_ERROR_NONE) {
+		// Failed to initialize hogl
+		return 1;
+	};
+
+	// Create new window
+	if (hogl_new_window(&hwindow) != HOGL_ERROR_NONE) {
+		// Failed to create a window
+		return 2;
+	}
 
 	printf("Hello world!\n");
 
@@ -47,6 +56,9 @@ int main(int argc, char** argv) {
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 	}
+
+	hogl_destroy_window(hwindow);
+	hogl_shutdown();
 
 	return 0;
 }

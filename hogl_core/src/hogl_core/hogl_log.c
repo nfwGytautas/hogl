@@ -2,64 +2,80 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
+#include <stdarg.h>
 
-#ifdef _WIN32
-#include <Windows.h>
-#elif __linux__
-#include <sys/types.h>
-#endif
+#include "hogl_core/os/hogl_os.h"
 
-// Thread id
-unsigned long get_thread_id() {
-#ifdef _WIN32
-	return GetCurrentThreadId();
-#elif __linux__
-	return gettid();
-#else
-	return 0;
-#endif
-}
+#define MESSAGE_SIZE 500
 
-#define _print_tttn(color, type, line, func, msg) \
-	struct tm* tm;\
-	time_t t;\
-	char date[30];\
-\
-	t = time(NULL);\
-	tm = localtime(&t);\
-\
-	strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", tm);\
-\
-	struct timespec ts;\
-	if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {\
-		/* timespec_get get error */\
-		printf("%s[%8s on thread: %ld at %s.xxx in function '%s' on line: %d]: %s \x1b[0m\n", color, type, get_thread_id(), date, func, line, msg);\
-	}\
-	else {\
-		printf("%s[%8s on thread: %ld at %s.%3ld in function '%s' on line: %d]: %s \x1b[0m\n", color, type, get_thread_id(), date, ts.tv_nsec / 1000000, func, line, msg);\
+static hogl_log_message_cb s_callback = NULL;
+
+void hogl_log_impl(const char* color, const char* type, int line, const char* function, const char* format, ...)
+{
+	struct timespec ts;
+	struct tm* tm;
+	va_list args;
+	time_t t;
+	char msgBuff[MESSAGE_SIZE];
+	int offset = 0;
+	int writeSize = 0;
+	int endSize = strlen("\x1b[0m");
+
+	// Color, type, thread id
+	writeSize = sprintf(msgBuff, "%s[%8s MESSAGE]\n\tTHREAD  : %ld\n\tDATE    : ", color, type, hogl_get_thread_id());
+	if (writeSize < 0) {
+		return;
+	}
+	offset += writeSize;
+
+	// Date
+	t = time(NULL);
+	tm = localtime(&t);
+
+	writeSize = strftime(msgBuff + offset, MESSAGE_SIZE - (size_t)offset, "%Y-%m-%d %H:%M:%S", tm);
+	if (writeSize < 0) {
+		return;
+	}
+	offset += writeSize;
+
+	if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {
+		// timespec_get error
+		writeSize = sprintf(msgBuff + offset, ".xxx\n\tFUNCTION: %s\n\tLINE    : %d\n\tMESSAGE : ", function, line);
+	}
+	else {
+		writeSize = sprintf(msgBuff + offset, ".%03ld\n\tFUNCTION: %s\n\tLINE    : %d\n\tMESSAGE : ", ts.tv_nsec / 1000000, function, line);
 	}
 
-#define RED "\x1b[31m"
-#define YELLOW "\x1b[33m"
-#define CYAN "\x1b[36m"
-#define GRAY "\x1b[90m"
+	if (writeSize < 0) {
+		return;
+	}
+	offset += writeSize;
 
-void _hogl_log_error(int line, const char* function, const char* msg)
-{
-	_print_tttn(RED, "ERROR", line, function, msg);
+	// Message
+	va_start(args, format);
+	writeSize = vsprintf(msgBuff + offset, format, args);
+	va_end(args);
+
+	if (writeSize < 0) {
+		return;
+	}
+	offset += writeSize;
+
+	// End
+	strncat(msgBuff + offset, "\x1b[0m", endSize);
+	offset += endSize;
+
+	// Printing
+	if (s_callback == NULL) {
+		printf("%s\n", msgBuff);
+	}
+	else {
+		s_callback(msgBuff, offset);
+	}
 }
 
-void _hogl_log_warn(int line, const char* function, const char* msg)
+void hogl_set_log_cb(hogl_log_message_cb callback)
 {
-	_print_tttn(YELLOW, "WARNING", line, function, msg);
-}
-
-void _hogl_log_info(int line, const char* function, const char* msg)
-{
-	_print_tttn(CYAN, "INFO", line, function, msg);
-}
-
-void _hogl_log_trace(int line, const char* function, const char* msg)
-{
-	_print_tttn(GRAY, "TRACE", line, function, msg);
+	s_callback = callback;
 }

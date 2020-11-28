@@ -36,14 +36,15 @@
  * Additional information will be outputted into the screen automatically.
 */
 typedef enum {
-	HOGL_ERROR_NONE
+	HOGL_ERROR_NONE,
+	HOGL_ERROR_GLFW_INIT
 } hogl_error;
 
 
 /**
 * Type forward declarations
 */
-
+typedef struct _hogl_wnd hogl_wnd;
 
 /**
 * General types
@@ -54,7 +55,9 @@ typedef enum {
 * Files
 */
 #include <stdbool.h>
+#include "hogl_core/hogl_memory.h"
 #include "hogl_core/hogl_log.h"
+#include "hogl_core/hogl_wnd.h"
 
 /**
 * Functionality
@@ -67,6 +70,17 @@ typedef enum {
 */
 HOGL_API const char* hogl_error_desc(hogl_error err);
 
-HOGL_API hogl_error hogl_init();
+/**
+ * @brief Initializes hogl and all its subsystems
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE			if initialization was successful
+ *		HOGL_ERROR_GLFW_INIT	if glfw could not be initialized
+*/
+HOGL_API hogl_error hogl_init(void);
+
+/**
+ * @brief Shutdowns hogl library
+*/
+HOGL_API void hogl_shutdown(void);
 
 #endif
