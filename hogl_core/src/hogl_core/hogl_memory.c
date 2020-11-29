@@ -14,7 +14,7 @@ static int s_allocations = 0;
 
 void* hogl_malloc(unsigned int size)
 {
-	hogl_log_trace("Allocating %ld", size);
+	hogl_log_trace("Allocating %ld bytes", size);
 	hogl_atomic_add_b32(&s_allocated, size);
 	hogl_atomic_add_b32(&s_allocations, 1);
 
@@ -25,7 +25,7 @@ void* hogl_malloc(unsigned int size)
 void hogl_free(void* p)
 {
 	int blockSize = _msize(p);
-	hogl_log_trace("Freeing %ld", blockSize);
+	hogl_log_trace("Freeing %ld bytes", blockSize);
 	hogl_atomic_substract_b32(&s_allocated, blockSize);
 	hogl_atomic_substract_b32(&s_allocations, 1);
 

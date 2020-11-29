@@ -37,19 +37,10 @@
 */
 typedef enum {
 	HOGL_ERROR_NONE,
-	HOGL_ERROR_GLFW_INIT
+	HOGL_ERROR_GLFW_INIT,
+	HOGL_ERROR_WND_CREATE,
+	HOGL_ERROR_GLAD_INIT,
 } hogl_error;
-
-
-/**
-* Type forward declarations
-*/
-typedef struct _hogl_wnd hogl_wnd;
-
-/**
-* General types
-*/
-
 
 /**
 * Files
