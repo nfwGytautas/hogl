@@ -52,36 +52,36 @@ typedef struct _hogl_wi {
  *		HOGL_ERROR_WND_CREATE	if window creation failed
  *		HOGL_ERROR_GLAD_INIT	if GLAD failed to load OpenGL functions
 */
-hogl_error hogl_new_window(hogl_wnd** p);
+HOGL_API hogl_error hogl_new_window(hogl_wnd** p);
 
 /**
  * @brief Activates the OpenGL context associated with the specified window on current thread
  * @param window hogl_window that will be activated
 */
-void hogl_activate_context(hogl_wnd* window);
+HOGL_API void hogl_activate_context(hogl_wnd* window);
 
 /**
  * @brief Internally calls glfwSwapBuffers on the specified window
  * @param window Window to swap buffers for
 */
-void hogl_swap_window_buffer(hogl_wnd* window);
+HOGL_API void hogl_swap_window_buffer(hogl_wnd* window);
 
 /**
  * @brief Internally calls glfwPollEvents
 */
-void hogl_update_window_states(void);
+HOGL_API void hogl_update_window_states(void);
 
 /**
  * @brief Returns the window interface instance associated with the window
  * @param window Window whose interface is required
  * @return Pointer to the interface
 */
-hogl_wi* hogl_get_wi_ptr(hogl_wnd* window);
+HOGL_API hogl_wi* hogl_get_wi_ptr(hogl_wnd* window);
 
 /**
  * @brief Destroys the specified window
  * @param window window to destroy
 */
-void hogl_destroy_window(hogl_wnd* window);
+HOGL_API void hogl_destroy_window(hogl_wnd* window);
 
 #endif

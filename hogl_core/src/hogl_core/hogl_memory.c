@@ -1,6 +1,7 @@
 #include "hogl_memory.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "hogl_core/hogl_log.h"
 #include "hogl_core/os/hogl_os.h"
@@ -22,9 +23,19 @@ void* hogl_malloc(unsigned int size)
 	return malloc(size);
 }
 
+void hogl_memcpy(void* dst, const void* src, size_t size)
+{
+	size_t dst_size = _msize(dst);
+	if (dst_size < size) {
+		hogl_log_error("Copying %ld length data to a pointer that only has %ld", size, dst_size);
+	}
+
+	memcpy(dst, src, size);
+}
+
 void hogl_free(void* p)
 {
-	int blockSize = _msize(p);
+	size_t blockSize = _msize(p);
 	hogl_log_trace("Freeing %ld bytes", blockSize);
 	hogl_atomic_substract_b32(&s_allocated, blockSize);
 	hogl_atomic_substract_b32(&s_allocations, 1);

@@ -26,6 +26,8 @@ int main(int argc, char** argv) {
 
 	while (hwi->is_open) {
 
+
+
 		// Swap buffer and check for events
 		hogl_swap_window_buffer(hwindow);
 		hogl_update_window_states();

@@ -16,22 +16,30 @@
  * @param size Number of bytes to allocate
  * @return Pointer to the start of the allocated range
 */
-void* hogl_malloc(unsigned int size);
+HOGL_API void* hogl_malloc(unsigned int size);
+
+/**
+ * @brief Copies data from src to dst
+ * @param dst Destination pointer
+ * @param src Source pointer
+ * @param size Size to copy from source
+*/
+HOGL_API void hogl_memcpy(void* dst, const void* src, size_t size);
 
 /**
  * @brief Frees the memory specified by p
  * @param p Memory to free
 */
-void hogl_free(void* p);
+HOGL_API void hogl_free(void* p);
 
 /**
  * @brief Returns the allocated byte count, if hogl_free was called allocation size is decremented by pointer size
 */
-int hogl_get_allocated_bytes(void);
+HOGL_API int hogl_get_allocated_bytes(void);
 
 /**
  * @brief Returns the total number of allocations, if hogl_free was called allocation count is decremented by 1
 */
-int hogl_get_allocations(void);
+HOGL_API int hogl_get_allocations(void);
 
 #endif
