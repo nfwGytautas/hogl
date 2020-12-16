@@ -132,13 +132,25 @@ void __write_buffer_data(unsigned int target, size_t offset, void* data, size_t 
 }
 
 void __check_shader_status(unsigned int shader, unsigned int property, char** log) {
-	int  success;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	int success = 0;
 
-	if (!success)
-	{
-		(*log) = (char*)hogl_malloc(SHADER_LOG_LENGTH * sizeof(char));
-		glGetShaderInfoLog(shader, SHADER_LOG_LENGTH, NULL, (*log));
+	if (property == GL_COMPILE_STATUS) {
+		glGetShaderiv(shader, property, &success);
+
+		if (!success)
+		{
+			(*log) = (char*)hogl_malloc(SHADER_LOG_LENGTH * sizeof(char));
+			glGetShaderInfoLog(shader, SHADER_LOG_LENGTH, NULL, (*log));
+		}
+	}
+	else if (property == GL_LINK_STATUS) {
+		glGetProgramiv(shader, property, &success);
+
+		if (!success)
+		{
+			(*log) = (char*)hogl_malloc(SHADER_LOG_LENGTH * sizeof(char));
+			glGetProgramInfoLog(shader, SHADER_LOG_LENGTH, NULL, (*log));
+		}
 	}
 }
 
@@ -259,6 +271,8 @@ unsigned int __parse_rbuffer(hogl_rbuffer_format format) {
 void hogl_vao_new(hogl_vao** vao)
 {
 	(*vao) = (hogl_vao*)hogl_malloc(sizeof(hogl_vao));
+	(*vao)->vbos = NULL;
+	(*vao)->vbo_ids= NULL;
 	glGenVertexArrays(1, &(*vao)->id);
 }
 
@@ -280,8 +294,15 @@ void hogl_vao_bind(hogl_vao* vao)
 	glBindVertexArray(vao->id);
 }
 
-void hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size)
+hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size)
 {
+#ifndef HOGL_DISABLE_GL_BOUND_CHECKING
+	if (vao->vbos != NULL) {
+		hogl_log_error("Trying to allocate a vao twice");
+		return HOGL_ERROR_ALREADY_ALLOCATED;
+	}
+#endif
+
 	glBindVertexArray(vao->id);
 
 	// Allocate a vbo buffer
@@ -298,17 +319,22 @@ void hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size)
 		glBindBuffer(vao->vbos[i].type, vao->vbo_ids[i]);
 		glBufferData(vao->vbos[i].type, descs[i]->size, descs[i]->data, vao->vbos[i].usage);
 
-		// Configure ap
-		glEnableVertexAttribArray(descs[i]->ap_desc.index);
-		glVertexAttribPointer(
-			descs[i]->ap_desc.index, 
-			descs[i]->ap_desc.ecount,
-			__get_type(descs[i]->ap_desc.type),
-			descs[i]->ap_desc.normalized,
-			descs[i]->ap_desc.stride,
-			(void*)descs[i]->ap_desc.offset);
-		glVertexAttribDivisor(descs[i]->ap_desc.index, descs[i]->ap_desc.divisor);
+		// Don't need ap for element buffers
+		if (descs[i]->type != HOGL_VBOT_ELEMENT_BUFFER) {
+			// Configure ap
+			glEnableVertexAttribArray(descs[i]->ap_desc.index);
+			glVertexAttribPointer(
+				descs[i]->ap_desc.index,
+				descs[i]->ap_desc.ecount,
+				__get_type(descs[i]->ap_desc.type),
+				descs[i]->ap_desc.normalized,
+				descs[i]->ap_desc.stride,
+				(void*)descs[i]->ap_desc.offset);
+			glVertexAttribDivisor(descs[i]->ap_desc.index, descs[i]->ap_desc.divisor);
+		}
 	}
+
+	return HOGL_ERROR_NONE;
 }
 
 hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* data)
@@ -375,6 +401,7 @@ void hogl_vao_free(hogl_vao* vao)
 {
 	glDeleteBuffers(vao->vbo_count, vao->vbo_ids);
 	glDeleteVertexArrays(1, &vao->id);
+	hogl_free(vao->vbo_ids);
 	hogl_free(vao->vbos);
 	hogl_free(vao);
 }
@@ -447,6 +474,7 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(vertex_shader, GL_COMPILE_STATUS, &log);
 	if (log != NULL) {
+		hogl_log_error("Vertex shader failed to compile:\n%s", log);
 		glDeleteShader(vertex_shader);
 		hogl_free(log);
 		return HOGL_ERROR_SHADER_COMPILE;
@@ -461,6 +489,7 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(fragment_shader, GL_COMPILE_STATUS, &log);
 	if (log != NULL) {
+		hogl_log_error("Fragment shader failed to compile:\n%s", log);
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 		hogl_free(log);
@@ -471,12 +500,13 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 	// Link
 	program = glCreateProgram();
 	glAttachShader(program, vertex_shader);
-	glAttachShader(program, vertex_shader);
+	glAttachShader(program, fragment_shader);
 	glLinkProgram(program);
 
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(program, GL_LINK_STATUS, &log);
 	if (log != NULL) {
+		hogl_log_error("Failed to link shader program:\n%s", log);
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 		glDeleteProgram(program);

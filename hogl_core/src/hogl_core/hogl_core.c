@@ -37,6 +37,9 @@ hogl_error hogl_init(void)
 	// Only need 4 if logging
 #ifndef HOGL_SUPPRESS_GL_LOG
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+
+	// Debug mode for OpenGL
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
 #else
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 #endif

@@ -23,7 +23,7 @@ void GLAPIENTRY gl_error_cb(GLenum source, GLenum type, GLuint id, GLenum severi
 	case GL_DEBUG_TYPE_OTHER:
 	case GL_DEBUG_TYPE_PERFORMANCE:
 	case GL_DEBUG_TYPE_PORTABILITY:
-		hogl_log_warn("%s", message);
+		hogl_log_trace("%s", message);
 		break;
 	}
 }

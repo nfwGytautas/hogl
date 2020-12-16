@@ -83,7 +83,7 @@ typedef struct _hogl_ap_desc {
 	size_t offset;
 
 	/**
-	 * @brief The attribute data divisor, usually this will be 0 for non indexed rendering 1 for indexed rendering
+	 * @brief The attribute data divisor, usually this will be 0 for non instanced rendering 1 for indexed rendering
 	*/
 	int divisor;
 } hogl_ap_desc;
@@ -258,8 +258,11 @@ HOGL_API void hogl_vao_bind(hogl_vao* vao);
  * @param vao VAO to allocated buffers for
  * @param descs Array of vbo descriptions
  * @param size Size of types array
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE					if operation was successful
+ *		HOGL_ERROR_ALREADY_ALLOCATED	if the vao buffers were already allocated
 */
-HOGL_API void hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size);
+HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size);
 
 /**
  * @brief Resizes the specified vbo inside a vao with the new size and optionally fills it with data,
@@ -268,7 +271,7 @@ HOGL_API void hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_
  * @param vbo Internal vbo index
  * @param size New buffer size
  * @param data Optional buffer data, NULL if none
-* @return Returns error codes:
+ * @return Returns error codes:
  *		HOGL_ERROR_NONE			if operation was successful
  *		HOGL_ERROR_OUT_OF_RANGE	if the vbo parameter is larger than the allocated buffer size
 */

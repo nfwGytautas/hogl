@@ -22,8 +22,8 @@ typedef struct _hogl_wnd hogl_wnd;
 typedef bool(*hogl_wi_close_cb)(void*);
 
 /**
- * @brief hogl window interface is a struct that contains user space data like if the windows is closed
- * callbacks that can be set, this is auto managed by the window and once the window is destroyed so is
+ * @brief hogl window interface is a struct that contains user space data like if the windows is closed,
+ * event callbacks that can be set, the struct is auto managed by the window and once the window is destroyed so is
  * its interface
 */
 typedef struct _hogl_wi {

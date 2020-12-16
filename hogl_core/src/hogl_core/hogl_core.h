@@ -54,6 +54,8 @@ typedef enum {
 	HOGL_ERROR_SHADER_LINK,
 	HOGL_ERROR_BAD_ARGUMENT,
 	HOGL_ERROR_FBO_INCOMPLETE,
+	HOGL_ERROR_ALREADY_ALLOCATED,
+	HOGL_ERROR_UNKNOWN_MODE,
 } hogl_error;
 
 /**
@@ -193,6 +195,7 @@ typedef enum {
 #include "hogl_core/hogl_log.h"
 #include "hogl_core/hogl_wnd.h"
 #include "hogl_core/hogl_gl_primitive.h"
+#include "hogl_core/hogl_render.h"
 
 /**
 * Functionality
