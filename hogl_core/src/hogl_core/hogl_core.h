@@ -21,6 +21,11 @@
 	#define HOGL_API
 #endif
 
+#ifdef HOGL_SUITE_FULL
+#define HOGL_SUITE_GRAPHICS
+#define HOGL_SUITE_VF
+#endif
+
 #ifndef NULL
 #define NULL 0
 #endif
@@ -56,6 +61,11 @@ typedef enum {
 	HOGL_ERROR_FBO_INCOMPLETE,
 	HOGL_ERROR_ALREADY_ALLOCATED,
 	HOGL_ERROR_UNKNOWN_MODE,
+	HOGL_ERROR_BAD_PATH,
+	HOGL_ERROR_BAD_READ,
+	HOGL_ERROR_BAD_WRITE,
+	HOGL_ERROR_ENDIAN_MISMATCH,
+	HOGL_ERROR_VF_BAD_NAME,
 } hogl_error;
 
 /**
@@ -193,9 +203,16 @@ typedef enum {
 
 #include "hogl_core/hogl_memory.h"
 #include "hogl_core/hogl_log.h"
+
+#ifdef HOGL_SUITE_GRAPHICS
 #include "hogl_core/hogl_wnd.h"
 #include "hogl_core/hogl_gl_primitive.h"
 #include "hogl_core/hogl_render.h"
+#endif
+
+#ifdef HOGL_SUITE_VF
+#include "hogl_core/hogl_vf.h"
+#endif
 
 /**
 * Functionality

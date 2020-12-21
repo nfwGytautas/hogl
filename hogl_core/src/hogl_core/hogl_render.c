@@ -33,7 +33,7 @@ hogl_rstate hogl_default_rstate(void)
 
 void hogl_set_rstate(hogl_rstate rstate)
 {
-	return HOGL_ERROR_NONE;
+	
 }
 
 void hogl_set_depth_test(hogl_render_depth depth)

@@ -5,9 +5,10 @@ project(hogl_core C)
 
 
 # Init
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin>)
 
 set(DEVELOPMENT TRUE)
 
@@ -27,6 +28,9 @@ link_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/)
 # Source files
 file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
 
+# Suite type
+add_compile_definitions(HOGL_SUITE_FULL)
+
 # Defines
 if (${DEVELOPMENT})
 
@@ -44,6 +48,7 @@ endif()
 
 
 #set_property(TARGET hogl PROPERTY C_STANDARD 11)
+set_property(TARGET hogl PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # Libraries to link
 target_link_libraries(hogl PRIVATE Glad PRIVATE glfw3)

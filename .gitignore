@@ -385,6 +385,7 @@ _deps
 hogl.dir/
 
 build/
+bin/
 
 *.vcxproj
 *.vcxproj.filters

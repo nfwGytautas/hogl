@@ -27,6 +27,15 @@ HOGL_API void* hogl_malloc(unsigned int size);
 HOGL_API void hogl_memcpy(void* dst, const void* src, size_t size);
 
 /**
+ * @brief Copies data from src to dst where dst is a stack allocated variable, basically skips 
+ * the automatic bound checking, this will be the same as memcpy if HOGL_DISABLE_MEM_TRACK is defined
+ * @param dst Destination pointer
+ * @param src Source pointer
+ * @param size Size to copy from source
+*/
+HOGL_API void hogl_smemcpy(void* dst, const void* src, size_t size);
+
+/**
  * @brief Frees the memory specified by p
  * @param p Memory to free
 */

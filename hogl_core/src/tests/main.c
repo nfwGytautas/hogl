@@ -95,6 +95,7 @@ void create_primitives(void) {
 int main(int argc, char** argv) {
 	hogl_wnd* hwindow = NULL;
 	hogl_wi* hwi = NULL;
+	hogl_vf* resources = NULL;
 
 	// Initialize hogl
 	if (hogl_init() != HOGL_ERROR_NONE) {
@@ -102,10 +103,26 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
+	// Load resources
+	if (hogl_vf_read(&resources, "test.hvf") != HOGL_ERROR_NONE) {
+		// Failed to read
+		return 2;
+	}
+
+	size_t index = 0;
+	hogl_vf_get_item_index(resources, "test", &index);
+
+	uint32_t* number = NULL;
+	hogl_vf_map_item(resources, index, &number);
+
+	*number = 52;
+	hogl_vf_save(resources, "test.hvf");
+
+
 	// Create new window
 	if (hogl_new_window(&hwindow) != HOGL_ERROR_NONE) {
 		// Failed to create a window
-		return 2;
+		return 3;
 	}
 
 	// Not necessary but just configures to the default state
@@ -133,6 +150,8 @@ int main(int argc, char** argv) {
 	hogl_shader_free(example_shader);
 
 	hogl_destroy_window(hwindow);
+	hogl_vf_free(resources);
+
 	hogl_shutdown();
 
 	return 0;

@@ -15,6 +15,11 @@ static int s_allocations = 0;
 
 void* hogl_malloc(unsigned int size)
 {
+	if (size <= 0) {
+		hogl_log_error("Tried to allocate bad memory size (%ld) returning NULL", size);
+		return NULL;
+	}
+
 	hogl_log_trace("Allocating %ld bytes", size);
 	hogl_atomic_add_b32(&s_allocated, size);
 	hogl_atomic_add_b32(&s_allocations, 1);
@@ -30,6 +35,11 @@ void hogl_memcpy(void* dst, const void* src, size_t size)
 		hogl_log_error("Copying %ld length data to a pointer that only has %ld", size, dst_size);
 	}
 
+	memcpy(dst, src, size);
+}
+
+void hogl_smemcpy(void* dst, const void* src, size_t size)
+{
 	memcpy(dst, src, size);
 }
 
