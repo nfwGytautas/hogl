@@ -103,22 +103,6 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	// Load resources
-	if (hogl_vf_read(&resources, "test.hvf") != HOGL_ERROR_NONE) {
-		// Failed to read
-		return 2;
-	}
-
-	size_t index = 0;
-	hogl_vf_get_item_index(resources, "test", &index);
-
-	uint32_t* number = NULL;
-	hogl_vf_map_item(resources, index, &number);
-
-	*number = 52;
-	hogl_vf_save(resources, "test.hvf");
-
-
 	// Create new window
 	if (hogl_new_window(&hwindow) != HOGL_ERROR_NONE) {
 		// Failed to create a window

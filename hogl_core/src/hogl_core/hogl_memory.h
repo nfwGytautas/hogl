@@ -36,6 +36,23 @@ HOGL_API void hogl_memcpy(void* dst, const void* src, size_t size);
 HOGL_API void hogl_smemcpy(void* dst, const void* src, size_t size);
 
 /**
+ * @brief Expands the specified data pointer to match the new size, the existing data is preserved up to the
+ * previous size, the resulting pointer can be different from the original, depending on the implementation
+ * @param dst The pointer to reallocate
+ * @param new_size New size of the pointer
+ * @return Pointer to the new address of the memory region or NULL if the call failed
+*/
+HOGL_API void* hogl_realloc(void* dst, size_t new_size);
+
+/**
+ * @brief Sets the memory of the specified pointer to the value
+ * @param dst Pointer to set
+ * @param value Value to fill the pointer with
+ * @param count Number of elements to set
+*/
+HOGL_API void hogl_memset(void* dst, int value, size_t count);
+
+/**
  * @brief Frees the memory specified by p
  * @param p Memory to free
 */
