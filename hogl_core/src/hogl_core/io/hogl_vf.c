@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "hogl_core/shared/hogl_log.h"
+#include "hogl_core/shared/hogl_memory.h"
 
 /**
  * @brief VF format is as follows:

@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "hogl_core/hogl_log.h"
+#include "hogl_core/shared/hogl_log.h"
 #include "hogl_core/os/hogl_os.h"
 
 #ifndef HOGL_DISABLE_MEM_TRACK
 
 #ifdef _WIN32
+
+// WINDOWS
 
 static int s_allocated = 0;
 static int s_allocations = 0;
@@ -77,5 +79,23 @@ void hogl_print_allocated(void) {
 	hogl_log_info("hogl memory allocated: %d", hogl_atomic_get_b32(&s_allocated));
 }
 
+#elif __linux__
+
+// LINUX
+
+// NOT YET IMPLEMENTED
+
+#else
+
+// OTHER
+// NOT YET IMPLEMENTED
+
 #endif
+
+#else
+
+// DEFAULT
+
+
+
 #endif

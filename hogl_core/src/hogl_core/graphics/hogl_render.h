@@ -6,7 +6,8 @@
 #ifndef _HOGL_RENDER_
 #define _HOGL_RENDER_
 
-#include "hogl_core/hogl_core.h"
+#include <stdbool.h>
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief A render state struct is used to hold the rendering state and is primarily a
@@ -24,6 +25,19 @@ typedef struct _hogl_rstate {
  * @param a Alpha color channel value
 */
 HOGL_API void hogl_render_clear(float r, float g, float b, float a);
+
+/**
+ * @brief Sets the new viewport, does not change the window size
+ * @param width Width of the new viewport
+ * @param height Height of the new viewport
+*/
+HOGL_API void hogl_viewport(unsigned int width, unsigned int height);
+
+/**
+ * @brief Enables/Disables seamless cubemap rendering
+ * @param enabled True for enabled, false otherwise
+*/
+HOGL_API void hogl_seamless_cm(bool enabled);
 
 /**
  * @brief Returns the default render state preset

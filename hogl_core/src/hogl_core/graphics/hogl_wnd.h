@@ -5,8 +5,8 @@
 #ifndef _HOGL_WINDOW_
 #define _HOGL_WINDOW_
 
-#include "hogl_core.h"
 #include <stdbool.h>
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief hogl window represents a single rendering window, however this is by itself

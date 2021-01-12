@@ -6,8 +6,7 @@
 #define _HOGL_VF_
 
 #include <stdint.h>
-
-#include "hogl_core/hogl_core.h"
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief Virtual file object containing the data use hogl_vf_ and hogl_vfe_ API to manipulate,

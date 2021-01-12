@@ -5,7 +5,7 @@
 #ifndef _HOGL_GL_PRIMITIVE_
 #define _HOGL_GL_PRIMITIVE_
 
-#include "hogl_core.h"
+#include "hogl_core/shared/hogl_def.h"
 #include <stdbool.h>
 
 /**
@@ -95,12 +95,14 @@ typedef struct _hogl_ap_desc {
 typedef struct _hogl_vbo_desc {
 	hogl_vbo_type type;
 	hogl_vbo_usage usage;
-	hogl_ap_desc ap_desc;
+
+	hogl_ap_desc* ap_desc;
+	size_t desc_size;
 
 	/**
 	 * @brief Size to allocate for a buffer, this can be changed later
 	*/
-	size_t size;
+	size_t data_size;
 
 	/**
 	 * @brief Initial data inside a buffer, if the usage is static this should
@@ -142,21 +144,6 @@ typedef struct _hogl_ubo_desc {
  * @brief Texture description
 */
 typedef struct _hogl_texture_desc {
-	/**
-	 * @brief The way that the texture is displayed
-	*/
-	hogl_texture_format display_format;
-
-	/**
-	 * @brief The data passed to the texture format
-	*/
-	hogl_texture_format data_format;
-
-	/**
-	 * @brief Element type of texture data
-	*/
-	hogl_element_type type;
-
 	/**
 	 * @brief Wrapping type for the x axis
 	*/
@@ -262,7 +249,7 @@ HOGL_API void hogl_vao_bind(hogl_vao* vao);
  *		HOGL_ERROR_NONE					if operation was successful
  *		HOGL_ERROR_ALREADY_ALLOCATED	if the vao buffers were already allocated
 */
-HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size);
+HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc* descs, size_t size);
 
 /**
  * @brief Resizes the specified vbo inside a vao with the new size and optionally fills it with data,
@@ -346,8 +333,22 @@ HOGL_API hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
  * @param shader Shader to link
  * @param ubo_name Name of the ubo in the shader
  * @param bp Bind point to set for the specified ubo_name buffer
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_UNIFORM_UNKNOWN	if the specified name is not found in the shader
 */
-HOGL_API void hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, unsigned int bp);
+HOGL_API hogl_error hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, unsigned int bp);
+
+/**
+ * @brief Links the specified sampler to the specified shader bind point
+ * @param shader Shader to link
+ * @param sample_name Name of the sampler variable
+ * @param bp Bind point
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_UNIFORM_UNKNOWN	if the specified name is not found in the shader
+*/
+HOGL_API hogl_error hogl_shader_sampler_location(hogl_shader* shader, const char* sampler_name, unsigned int bp);
 
 /**
  * @brief Binds the specified shader to the OpenGL state machine
@@ -433,6 +434,18 @@ HOGL_API hogl_error hogl_framebuffer_new(hogl_framebuffer** framebuffer, hogl_fr
  * @param framebuffer Framebuffer to bind
 */
 HOGL_API void hogl_framebuffer_bind(hogl_framebuffer* framebuffer);
+
+/**
+ * @brief Binds a texture to the specified framebuffer texture slot attachment
+ * @param framebuffer Framebuffer to attach to
+ * @param texture Texture to attach
+ * @param slot Slot where the texture will be attached
+ * @param mip Mipmap level default 0
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_FBO_INCOMPLETE	if the framebuffer is incomplete, meaning something was wrong with attachments
+*/
+HOGL_API hogl_error hogl_framebuffer_ca(hogl_framebuffer* framebuffer, hogl_texture* texture, unsigned int slot, unsigned int mip);
 
 /**
  * @brief Frees all resources associated with the specified framebuffer

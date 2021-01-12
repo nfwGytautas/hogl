@@ -5,7 +5,7 @@
 #ifndef _HOGL_LOG_
 #define _HOGL_LOG_
 
-#include "hogl_core.h"
+#include "hogl_core/shared/hogl_def.h"
 
 /**
 * Type forward declarations

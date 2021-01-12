@@ -5,7 +5,7 @@
 #ifndef _HOGL_OS_
 #define _HOGL_OS_
 
-#include "hogl_core/hogl_core.h"
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief Returns the current thread id

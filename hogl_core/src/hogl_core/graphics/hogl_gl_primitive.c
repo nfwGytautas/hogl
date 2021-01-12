@@ -3,8 +3,8 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
-#include "hogl_core/hogl_log.h"
-#include "hogl_core/hogl_memory.h"
+#include "hogl_core/shared/hogl_log.h"
+#include "hogl_core/shared/hogl_memory.h"
 
 #define SHADER_LOG_LENGTH 512
 #define MIN_FBO_COLOR_ATTACHMENT 8
@@ -16,7 +16,7 @@ typedef struct _hogl_vbo_meta {
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
 	size_t size;
 #endif
-	
+
 #ifndef HOGL_DISABLE_GL_WARNING
 	bool has_data;
 #endif
@@ -64,36 +64,36 @@ void __parse_vbo_from_desc(hogl_vbo_meta* vbo, hogl_vbo_desc* desc) {
 	// Type
 	switch (desc->type)
 	{
-		case HOGL_VBOT_ARRAY_BUFFER:
-			vbo->type = GL_ARRAY_BUFFER;
-			break;
-		case HOGL_VBOT_ELEMENT_BUFFER:
-			vbo->type = GL_ELEMENT_ARRAY_BUFFER;
-			break;
-		default:
-			hogl_log_warn("No type specified for vbo, assuming ARRAY buffer");
-			vbo->type = GL_ARRAY_BUFFER;
+	case HOGL_VBOT_ARRAY_BUFFER:
+		vbo->type = GL_ARRAY_BUFFER;
+		break;
+	case HOGL_VBOT_ELEMENT_BUFFER:
+		vbo->type = GL_ELEMENT_ARRAY_BUFFER;
+		break;
+	default:
+		hogl_log_warn("No type specified for vbo, assuming ARRAY buffer");
+		vbo->type = GL_ARRAY_BUFFER;
 	}
 
 	// Usage
 	switch (desc->usage)
 	{
-		case HOGL_VBOU_STATIC:
-			vbo->usage = GL_STATIC_DRAW;
-			break;
-		case HOGL_VBOU_DYNAMIC:
-			vbo->usage = GL_DYNAMIC_DRAW;
-			break;
-		case HOGL_VBOU_STREAM:
-			vbo->usage = GL_STREAM_DRAW;
-			break;
-		default:
-			hogl_log_warn("No usage specified for vbo, assuming DYNAMIC buffer");
-			vbo->usage = GL_DYNAMIC_DRAW;
+	case HOGL_VBOU_STATIC:
+		vbo->usage = GL_STATIC_DRAW;
+		break;
+	case HOGL_VBOU_DYNAMIC:
+		vbo->usage = GL_DYNAMIC_DRAW;
+		break;
+	case HOGL_VBOU_STREAM:
+		vbo->usage = GL_STREAM_DRAW;
+		break;
+	default:
+		hogl_log_warn("No usage specified for vbo, assuming DYNAMIC buffer");
+		vbo->usage = GL_DYNAMIC_DRAW;
 	}
 
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
-	vbo->size = desc->size;
+	vbo->size = desc->data_size;
 
 	if (vbo->size == 0) {
 		hogl_log_warn("Creating a 0 length vbo");
@@ -113,22 +113,24 @@ void __parse_vbo_from_desc(hogl_vbo_meta* vbo, hogl_vbo_desc* desc) {
 
 unsigned int __get_type(hogl_element_type type) {
 	switch (type) {
-		case HOGL_ET_FLOAT:
-			return GL_FLOAT;
-		case HOGL_ET_UBYTE:
-			return GL_UNSIGNED_BYTE;
-		case HOGL_ET_UINT:
-			return GL_UNSIGNED_INT;
-		default:
-			hogl_log_warn("No element type specified, assuming FLOAT");
-			return GL_FLOAT;
+	case HOGL_ET_FLOAT:
+		return GL_FLOAT;
+	case HOGL_ET_UBYTE:
+		return GL_UNSIGNED_BYTE;
+	case HOGL_ET_UINT:
+		return GL_UNSIGNED_INT;
+	default:
+		hogl_log_warn("No element type specified, assuming FLOAT");
+		return GL_FLOAT;
 	}
 }
 
 void __write_buffer_data(unsigned int target, size_t offset, void* data, size_t size) {
 	void* dst = glMapBuffer(target, GL_WRITE_ONLY);
-	hogl_memcpy((char*)dst + offset, data, size);
+	hogl_gl_check();
+	hogl_smemcpy((char*)dst + offset, data, size);
 	glUnmapBuffer(target);
+	hogl_gl_check();
 }
 
 void __check_shader_status(unsigned int shader, unsigned int property, char** log) {
@@ -136,20 +138,24 @@ void __check_shader_status(unsigned int shader, unsigned int property, char** lo
 
 	if (property == GL_COMPILE_STATUS) {
 		glGetShaderiv(shader, property, &success);
+		hogl_gl_check();
 
 		if (!success)
 		{
 			(*log) = (char*)hogl_malloc(SHADER_LOG_LENGTH * sizeof(char));
 			glGetShaderInfoLog(shader, SHADER_LOG_LENGTH, NULL, (*log));
+			hogl_gl_check();
 		}
 	}
 	else if (property == GL_LINK_STATUS) {
 		glGetProgramiv(shader, property, &success);
+		hogl_gl_check();
 
 		if (!success)
 		{
 			(*log) = (char*)hogl_malloc(SHADER_LOG_LENGTH * sizeof(char));
 			glGetProgramInfoLog(shader, SHADER_LOG_LENGTH, NULL, (*log));
+			hogl_gl_check();
 		}
 	}
 }
@@ -157,23 +163,25 @@ void __check_shader_status(unsigned int shader, unsigned int property, char** lo
 unsigned int __parse_tformat(hogl_texture_format format) {
 	switch (format)
 	{
-		case HOGL_TF_RED:
-			return GL_RED;
-		case HOGL_TF_RG:
-			return GL_RG;
-		case HOGL_TF_RGB:
-			return GL_RGB;
-		case HOGL_TF_RGBA:
-			return GL_RGBA;
-		case HOGL_TF_R16F:
-			return GL_R16F;
-		case HOGL_TF_RGB16F:
-			return GL_RGB16F;
-		case HOGL_TF_RGBA16F:
-			return GL_RGBA16F;
-		default:
-			hogl_log_warn("No texture format specified, assuming RGB");
-			return 0;
+	case HOGL_TF_RED:
+		return GL_RED;
+	case HOGL_TF_RG:
+		return GL_RG;
+	case HOGL_TF_RGB:
+		return GL_RGB;
+	case HOGL_TF_RGBA:
+		return GL_RGBA;
+	case HOGL_TF_R16F:
+		return GL_R16F;
+	case HOGL_TF_RG16F:
+		return GL_RG16F;
+	case HOGL_TF_RGB16F:
+		return GL_RGB16F;
+	case HOGL_TF_RGBA16F:
+		return GL_RGBA16F;
+	default:
+		hogl_log_warn("No texture format specified, assuming RGB");
+		return 0;
 	}
 }
 
@@ -218,14 +226,17 @@ hogl_error __parse_texture_from_desc(hogl_texture* texture, hogl_texture_desc* d
 	// Wrapping
 	if (desc->xwrap != HOGL_WT_DONT_WRAP) {
 		glTexParameteri(texture->target, GL_TEXTURE_WRAP_S, __parse_wrap(desc->xwrap));
+		hogl_gl_check();
 	}
 
 	if (desc->ywrap != HOGL_WT_DONT_WRAP) {
 		glTexParameteri(texture->target, GL_TEXTURE_WRAP_T, __parse_wrap(desc->ywrap));
+		hogl_gl_check();
 	}
 
 	if (desc->zwrap != HOGL_WT_DONT_WRAP) {
 		glTexParameteri(texture->target, GL_TEXTURE_WRAP_R, __parse_wrap(desc->zwrap));
+		hogl_gl_check();
 	}
 
 	// Mag filter
@@ -238,11 +249,13 @@ hogl_error __parse_texture_from_desc(hogl_texture* texture, hogl_texture_desc* d
 		}
 #endif
 		glTexParameteri(texture->target, GL_TEXTURE_MAG_FILTER, __parse_filter(desc->mag_filter));
+		hogl_gl_check();
 	}
 
 	// Min filter
 	if (desc->min_filter != HOGL_FT_NONE) {
 		glTexParameteri(texture->target, GL_TEXTURE_MIN_FILTER, __parse_filter(desc->min_filter));
+		hogl_gl_check();
 	}
 
 	return HOGL_ERROR_NONE;
@@ -250,34 +263,33 @@ hogl_error __parse_texture_from_desc(hogl_texture* texture, hogl_texture_desc* d
 
 unsigned int __parse_rbuffer(hogl_rbuffer_format format) {
 	switch (format) {
-		case HOGL_RBF_d16:
-			return GL_DEPTH_COMPONENT16;
-		case HOGL_RBF_d24:
-			return GL_DEPTH_COMPONENT24;
-		case HOGL_RBF_d32F:
-			return GL_DEPTH_COMPONENT32F;
-		case HOGL_RBF_d24_s8:
-			return GL_DEPTH24_STENCIL8;
-		case HOGL_RBF_d32F_s8:
-			return GL_DEPTH32F_STENCIL8;
-		case HOGL_RBF_si8:
-			return GL_STENCIL_INDEX8;
-		default:
-			hogl_log_warn("No texture filter specified, assuming d24_s8");
-			return GL_DEPTH24_STENCIL8;
+	case HOGL_RBF_d16:
+		return GL_DEPTH_COMPONENT16;
+	case HOGL_RBF_d24:
+		return GL_DEPTH_COMPONENT24;
+	case HOGL_RBF_d32F:
+		return GL_DEPTH_COMPONENT32F;
+	case HOGL_RBF_d24_s8:
+		return GL_DEPTH24_STENCIL8;
+	case HOGL_RBF_d32F_s8:
+		return GL_DEPTH32F_STENCIL8;
+	case HOGL_RBF_si8:
+		return GL_STENCIL_INDEX8;
+	default:
+		hogl_log_warn("No texture filter specified, assuming d24_s8");
+		return GL_DEPTH24_STENCIL8;
 	}
 }
 
-void hogl_vao_new(hogl_vao** vao)
-{
+void hogl_vao_new(hogl_vao** vao) {
 	(*vao) = (hogl_vao*)hogl_malloc(sizeof(hogl_vao));
 	(*vao)->vbos = NULL;
-	(*vao)->vbo_ids= NULL;
+	(*vao)->vbo_ids = NULL;
 	glGenVertexArrays(1, &(*vao)->id);
+	hogl_gl_check();
 }
 
-void hogl_vao_bind(hogl_vao* vao)
-{
+void hogl_vao_bind(hogl_vao* vao) {
 #ifndef HOGL_DISABLE_GL_WARNING
 	if (vao->vbo_count == 0) {
 		hogl_log_warn("Binding vao without any vertex buffers");
@@ -292,10 +304,10 @@ void hogl_vao_bind(hogl_vao* vao)
 #endif
 
 	glBindVertexArray(vao->id);
+	hogl_gl_check();
 }
 
-hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t size)
-{
+hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc* descs, size_t size) {
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
 	if (vao->vbos != NULL) {
 		hogl_log_error("Trying to allocate a vao twice");
@@ -304,6 +316,7 @@ hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t s
 #endif
 
 	glBindVertexArray(vao->id);
+	hogl_gl_check();
 
 	// Allocate a vbo buffer
 	vao->vbos = (hogl_vbo_meta*)hogl_malloc(sizeof(hogl_vbo_meta) * size);
@@ -311,34 +324,41 @@ hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc** descs, size_t s
 
 	vao->vbo_ids = (unsigned int*)hogl_malloc(sizeof(unsigned int) * size);
 	glGenBuffers(size, vao->vbo_ids);
+	hogl_gl_check();
 
 	for (size_t i = 0; i < size; i++) {
-		__parse_vbo_from_desc(&vao->vbos[i], descs[i]);
+		__parse_vbo_from_desc(&vao->vbos[i], &descs[i]);
 
 		// Bind and preallocate buffer
 		glBindBuffer(vao->vbos[i].type, vao->vbo_ids[i]);
-		glBufferData(vao->vbos[i].type, descs[i]->size, descs[i]->data, vao->vbos[i].usage);
+		hogl_gl_check();
+		glBufferData(vao->vbos[i].type, descs[i].data_size, descs[i].data, vao->vbos[i].usage);
+		hogl_gl_check();
 
 		// Don't need ap for element buffers
-		if (descs[i]->type != HOGL_VBOT_ELEMENT_BUFFER) {
+		if (descs[i].type != HOGL_VBOT_ELEMENT_BUFFER) {
 			// Configure ap
-			glEnableVertexAttribArray(descs[i]->ap_desc.index);
-			glVertexAttribPointer(
-				descs[i]->ap_desc.index,
-				descs[i]->ap_desc.ecount,
-				__get_type(descs[i]->ap_desc.type),
-				descs[i]->ap_desc.normalized,
-				descs[i]->ap_desc.stride,
-				(void*)descs[i]->ap_desc.offset);
-			glVertexAttribDivisor(descs[i]->ap_desc.index, descs[i]->ap_desc.divisor);
+			for (size_t j = 0; j < descs[i].desc_size; j++) {
+				glEnableVertexAttribArray(descs[i].ap_desc[j].index);
+				hogl_gl_check();
+				glVertexAttribPointer(
+					descs[i].ap_desc[j].index,
+					descs[i].ap_desc[j].ecount,
+					__get_type(descs[i].ap_desc[j].type),
+					descs[i].ap_desc[j].normalized,
+					descs[i].ap_desc[j].stride,
+					(void*)descs[i].ap_desc[j].offset);
+				hogl_gl_check();
+				glVertexAttribDivisor(descs[i].ap_desc[j].index, descs[i].ap_desc[j].divisor);
+				hogl_gl_check();
+			}
 		}
 	}
 
 	return HOGL_ERROR_NONE;
 }
 
-hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* data)
-{
+hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* data) {
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
 	if (vao->vbo_count <= vbo) {
 		hogl_log_error("Trying to access vbo %d while the vao only has %d", vbo, vao->vbo_count);
@@ -359,14 +379,16 @@ hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* dat
 #endif
 
 	glBindVertexArray(vao->id);
+	hogl_gl_check();
 	glBindBuffer(vao->vbos[vbo].type, vao->vbo_ids[vbo]);
+	hogl_gl_check();
 	glBufferData(vao->vbos[vbo].type, size, data, vao->vbos[vbo].usage);
+	hogl_gl_check();
 
 	return HOGL_ERROR_NONE;
 }
 
-hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void* data, size_t size)
-{
+hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void* data, size_t size) {
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
 	if (vao->vbo_count <= vbo) {
 		hogl_log_error("Trying to access vbo %d while the vao only has %d", vbo, vao->vbo_count);
@@ -387,7 +409,9 @@ hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void*
 #endif
 
 	glBindVertexArray(vao->id);
+	hogl_gl_check();
 	glBindBuffer(vao->vbos[vbo].type, vao->vbo_ids[vbo]);
+	hogl_gl_check();
 	__write_buffer_data(vao->vbos[vbo].type, vbo_offset, data, size);
 
 #ifndef HOGL_DISABLE_GL_WARNING
@@ -397,17 +421,17 @@ hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void*
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_vao_free(hogl_vao* vao)
-{
+void hogl_vao_free(hogl_vao* vao) {
 	glDeleteBuffers(vao->vbo_count, vao->vbo_ids);
+	hogl_gl_check();
 	glDeleteVertexArrays(1, &vao->id);
+	hogl_gl_check();
 	hogl_free(vao->vbo_ids);
 	hogl_free(vao->vbos);
 	hogl_free(vao);
 }
 
-hogl_error hogl_ubo_new(hogl_ubo** ubo, hogl_ubo_desc desc)
-{
+hogl_error hogl_ubo_new(hogl_ubo** ubo, hogl_ubo_desc desc) {
 #ifndef HOGL_DISABLE_GL_WARNING
 	if (desc.stride % 4 != 0) {
 		hogl_log_warn("%ld is not divisible by modulo 4, which can lead to alignment issues");
@@ -423,23 +447,26 @@ hogl_error hogl_ubo_new(hogl_ubo** ubo, hogl_ubo_desc desc)
 
 	(*ubo) = (hogl_ubo*)hogl_malloc(sizeof(hogl_ubo));
 	glGenBuffers(1, &(*ubo)->id);
+	hogl_gl_check();
 	glBindBuffer(GL_UNIFORM_BUFFER, (*ubo)->id);
+	hogl_gl_check();
 	glBufferData(GL_UNIFORM_BUFFER, desc.stride, NULL, GL_DYNAMIC_DRAW);
+	hogl_gl_check();
 
 	(*ubo)->stride = desc.stride;
 
 	glBindBufferRange(GL_UNIFORM_BUFFER, desc.bp, (*ubo)->id, desc.offset, desc.stride);
+	hogl_gl_check();
 
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_ubo_bind(hogl_ubo* ubo)
-{
+void hogl_ubo_bind(hogl_ubo* ubo) {
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo->id);
+	hogl_gl_check();
 }
 
-hogl_error hogl_ubo_data(hogl_ubo* ubo, void* data, size_t size)
-{
+hogl_error hogl_ubo_data(hogl_ubo* ubo, void* data, size_t size) {
 #ifndef HOGL_DISABLE_GL_BOUND_CHECKING
 	if (ubo->stride < size) {
 		hogl_log_error("Trying to write %ld length data to a buffer whose length is only %ld", size, ubo->stride);
@@ -448,19 +475,19 @@ hogl_error hogl_ubo_data(hogl_ubo* ubo, void* data, size_t size)
 #endif
 
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo->id);
+	hogl_gl_check();
 	__write_buffer_data(GL_UNIFORM_BUFFER, 0, data, size);
 
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_ubo_free(hogl_ubo* ubo)
-{
+void hogl_ubo_free(hogl_ubo* ubo) {
 	glDeleteBuffers(1, &ubo->id);
+	hogl_gl_check();
 	hogl_free(ubo);
 }
 
-hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
-{
+hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc) {
 	char* log = NULL;
 	unsigned int program = 0;
 	unsigned int vertex_shader = 0;
@@ -468,14 +495,18 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 
 	// Vertex
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	hogl_gl_check();
 	glShaderSource(vertex_shader, 1, &desc.vertex_source, NULL);
+	hogl_gl_check();
 	glCompileShader(vertex_shader);
+	hogl_gl_check();
 
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(vertex_shader, GL_COMPILE_STATUS, &log);
 	if (log != NULL) {
 		hogl_log_error("Vertex shader failed to compile:\n%s", log);
 		glDeleteShader(vertex_shader);
+		hogl_gl_check();
 		hogl_free(log);
 		return HOGL_ERROR_SHADER_COMPILE;
 	}
@@ -483,15 +514,20 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 
 	// Fragment
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	hogl_gl_check();
 	glShaderSource(fragment_shader, 1, &desc.fragment_source, NULL);
+	hogl_gl_check();
 	glCompileShader(fragment_shader);
+	hogl_gl_check();
 
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(fragment_shader, GL_COMPILE_STATUS, &log);
 	if (log != NULL) {
 		hogl_log_error("Fragment shader failed to compile:\n%s", log);
 		glDeleteShader(vertex_shader);
+		hogl_gl_check();
 		glDeleteShader(fragment_shader);
+		hogl_gl_check();
 		hogl_free(log);
 		return HOGL_ERROR_SHADER_COMPILE;
 	}
@@ -499,17 +535,24 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 
 	// Link
 	program = glCreateProgram();
+	hogl_gl_check();
 	glAttachShader(program, vertex_shader);
+	hogl_gl_check();
 	glAttachShader(program, fragment_shader);
+	hogl_gl_check();
 	glLinkProgram(program);
+	hogl_gl_check();
 
 #ifndef HOGL_DISABLE_GL_WARNING
 	__check_shader_status(program, GL_LINK_STATUS, &log);
 	if (log != NULL) {
 		hogl_log_error("Failed to link shader program:\n%s", log);
 		glDeleteShader(vertex_shader);
+		hogl_gl_check();
 		glDeleteShader(fragment_shader);
+		hogl_gl_check();
 		glDeleteProgram(program);
+		hogl_gl_check();
 		hogl_free(log);
 		return HOGL_ERROR_SHADER_LINK;
 	}
@@ -519,56 +562,82 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
 	(*shader)->id = program;
 
 	glDeleteShader(vertex_shader);
+	hogl_gl_check();
 	glDeleteShader(fragment_shader);
+	hogl_gl_check();
 
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, unsigned int bp)
-{
-	unsigned int index = glGetUniformBlockIndex(shader->id, ubo_name);
+hogl_error hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, unsigned int bp) {
+	int index = glGetUniformBlockIndex(shader->id, ubo_name);
+	hogl_gl_check();
+
+	if (index == -1 || index == GL_INVALID_INDEX) {
+		hogl_log_warn("Trying to bind UBO %s to non existing bind point %ld", ubo_name, bp);
+		return HOGL_ERROR_UNIFORM_UNKNOWN;
+	}
+
 	glUniformBlockBinding(shader->id, index, bp);
+	hogl_gl_check();
+	return HOGL_ERROR_NONE;
 }
 
-void hogl_shader_bind(hogl_shader* shader)
-{
+hogl_error hogl_shader_sampler_location(hogl_shader* shader, const char* sampler_name, unsigned int bp) {
+	int index = glGetUniformLocation(shader->id, sampler_name);
+	hogl_gl_check();
+
+	if (index == -1 || index == GL_INVALID_INDEX) {
+		hogl_log_warn("Trying to bind sampler %s to non existing bind point %ld", sampler_name, bp);
+		return HOGL_ERROR_UNIFORM_UNKNOWN;
+	}
+
+	glUniform1i(index, bp);
+	hogl_gl_check();
+	return HOGL_ERROR_NONE;
+}
+
+void hogl_shader_bind(hogl_shader* shader) {
 	glUseProgram(shader->id);
+	hogl_gl_check();
 }
 
-void hogl_shader_free(hogl_shader* shader)
-{
+void hogl_shader_free(hogl_shader* shader) {
 	glDeleteProgram(shader->id);
+	hogl_gl_check();
 	hogl_free(shader);
 }
 
-hogl_error hogl_texture_new(hogl_texture** texture, hogl_texture_desc desc)
-{
+hogl_error hogl_texture_new(hogl_texture** texture, hogl_texture_desc desc) {
 	(*texture) = (hogl_texture*)hogl_malloc(sizeof(hogl_texture));
 	glGenTextures(1, &(*texture)->id);
+	hogl_gl_check();
 	(*texture)->target = GL_TEXTURE_2D;
 	glBindTexture(GL_TEXTURE_2D, (*texture)->id);
+	hogl_gl_check();
 	(*texture)->cside = GL_TEXTURE_2D;
 	return __parse_texture_from_desc(*texture, &desc);
 }
 
-hogl_error hogl_cm_new(hogl_texture** cm, hogl_texture_desc desc)
-{
+hogl_error hogl_cm_new(hogl_texture** cm, hogl_texture_desc desc) {
 	(*cm) = (hogl_texture*)hogl_malloc(sizeof(hogl_texture));
 	glGenTextures(1, &(*cm)->id);
+	hogl_gl_check();
 	(*cm)->target = GL_TEXTURE_CUBE_MAP;
 	glBindTexture(GL_TEXTURE_CUBE_MAP, (*cm)->id);
+	hogl_gl_check();
 	(*cm)->cside = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
 	return __parse_texture_from_desc(*cm, &desc);
 }
 
-void hogl_texture_bind(hogl_texture* texture, int slot)
-{
+void hogl_texture_bind(hogl_texture* texture, int slot) {
 	glActiveTexture(GL_TEXTURE0 + slot);
+	hogl_gl_check();
 	glBindTexture(texture->target, texture->id);
+	hogl_gl_check();
 }
 
-hogl_error hogl_cm_active_side(hogl_texture* cm, hogl_cm_side side)
-{
+hogl_error hogl_cm_active_side(hogl_texture* cm, hogl_cm_side side) {
 	switch (side) {
 	case HOGL_CMS_RIGHT:
 		cm->cside = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
@@ -590,42 +659,45 @@ hogl_error hogl_cm_active_side(hogl_texture* cm, hogl_cm_side side)
 		return HOGL_ERROR_NONE;
 	default:
 		hogl_log_error("Non valid cube map side passed defaulting to RIGHT")
-		return HOGL_ERROR_BAD_ARGUMENT;
+			return HOGL_ERROR_BAD_ARGUMENT;
 	}
 }
 
-void hogl_set_texture_data(hogl_texture* texture, hogl_texture_data* data)
-{
+void hogl_set_texture_data(hogl_texture* texture, hogl_texture_data* data) {
 	glBindTexture(texture->target, texture->id);
+	hogl_gl_check();
 	glTexImage2D(
-		texture->cside, 
-		0, 
-		__parse_tformat(data->data_format), 
-		data->width, 
-		data->height, 
+		texture->cside,
 		0,
-		__parse_tformat(data->display_format), 
-		__get_type(data->etype), 
+		__parse_tformat(data->data_format),
+		data->width,
+		data->height,
+		0,
+		__parse_tformat(data->display_format),
+		__get_type(data->etype),
 		data->data);
+	hogl_gl_check();
 }
 
-void hogl_texture_gen_mipmap(hogl_texture* texture)
-{
+void hogl_texture_gen_mipmap(hogl_texture* texture) {
 	glBindTexture(texture->target, texture->id);
+	hogl_gl_check();
 	glGenerateMipmap(texture->target);
+	hogl_gl_check();
 }
 
-void hogl_texture_free(hogl_texture* texture)
-{
+void hogl_texture_free(hogl_texture* texture) {
 	glDeleteTextures(1, &texture->id);
+	hogl_gl_check();
 	hogl_free(texture);
 }
 
-hogl_error hogl_framebuffer_new(hogl_framebuffer** framebuffer, hogl_framebuffer_desc desc)
-{
+hogl_error hogl_framebuffer_new(hogl_framebuffer** framebuffer, hogl_framebuffer_desc desc) {
 	(*framebuffer) = (hogl_framebuffer*)hogl_malloc(sizeof(hogl_framebuffer));
 	glGenFramebuffers(1, &(*framebuffer)->id);
+	hogl_gl_check();
 	glBindFramebuffer(GL_FRAMEBUFFER, (*framebuffer)->id);
+	hogl_gl_check();
 
 #ifndef HOGL_DISABLE_GL_WARNING
 	if (desc.ca_size > MIN_FBO_COLOR_ATTACHMENT) {
@@ -641,48 +713,68 @@ hogl_error hogl_framebuffer_new(hogl_framebuffer** framebuffer, hogl_framebuffer
 	// Color attachments
 	for (size_t i = 0; i < desc.ca_size; i++) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, desc.color_attachments[i]->target, desc.color_attachments[i]->id, 0);
+		hogl_gl_check();
 	}
 
 	// Render attachments
 	for (size_t i = 0; i < desc.ra_size; i++) {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, desc.render_attachments[i]->attachment_type, GL_RENDERBUFFER, desc.render_attachments[i]->id);
+		hogl_gl_check();
 	}
 
 	// Validate
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		hogl_gl_check();
 		hogl_log_error("Framebuffer incomplete");
 		return HOGL_ERROR_FBO_INCOMPLETE;
 	}
-
-	hogl_reset_framebuffer();
+	hogl_gl_check();
 
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_framebuffer_bind(hogl_framebuffer* framebuffer)
-{
+void hogl_framebuffer_bind(hogl_framebuffer* framebuffer) {
 	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
+	hogl_gl_check();
 }
 
-void hogl_framebuffer_free(hogl_framebuffer* framebuffer)
-{
+hogl_error hogl_framebuffer_ca(hogl_framebuffer* framebuffer, hogl_texture* texture, unsigned int slot, unsigned int mip) {
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->id);
+	hogl_gl_check();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + slot, texture->cside, texture->id, mip);
+	hogl_gl_check();
+
+	// Validate
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		hogl_gl_check();
+		hogl_log_error("Framebuffer incomplete");
+		return HOGL_ERROR_FBO_INCOMPLETE;
+	}
+	hogl_gl_check();
+
+	return HOGL_ERROR_NONE;
+}
+
+void hogl_framebuffer_free(hogl_framebuffer* framebuffer) {
 	glDeleteFramebuffers(1, &framebuffer->id);
+	hogl_gl_check();
 	hogl_free(framebuffer);
 }
 
-void hogl_reset_framebuffer(void)
-{
+void hogl_reset_framebuffer(void) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	hogl_gl_check();
 }
 
-hogl_error hogl_renderbuffer_new(hogl_renderbuffer** renderbuffer, hogl_rbuffer_format format, unsigned int width, unsigned int height)
-{
+hogl_error hogl_renderbuffer_new(hogl_renderbuffer** renderbuffer, hogl_rbuffer_format format, unsigned int width, unsigned int height) {
 	(*renderbuffer) = (hogl_renderbuffer*)hogl_malloc(sizeof(hogl_renderbuffer));
 	glGenRenderbuffers(1, &(*renderbuffer)->id);
+	hogl_gl_check();
 	glBindRenderbuffer(GL_RENDERBUFFER, (*renderbuffer)->id);
+	hogl_gl_check();
 
 	(*renderbuffer)->format = __parse_rbuffer(format);
-	
+
 	switch (format) {
 	case HOGL_RBF_d16:
 	case HOGL_RBF_d24:
@@ -705,23 +797,25 @@ hogl_error hogl_renderbuffer_new(hogl_renderbuffer** renderbuffer, hogl_rbuffer_
 	}
 
 	glRenderbufferStorage(GL_RENDERBUFFER, (*renderbuffer)->format, width, height);
+	hogl_gl_check();
 
 	return HOGL_ERROR_NONE;
 }
 
-void hogl_renderbuffer_resize(hogl_renderbuffer* renderbuffer, unsigned int width, unsigned int height)
-{
+void hogl_renderbuffer_resize(hogl_renderbuffer* renderbuffer, unsigned int width, unsigned int height) {
 	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer->id);
+	hogl_gl_check();
 	glRenderbufferStorage(GL_RENDERBUFFER, renderbuffer->format, width, height);
+	hogl_gl_check();
 }
 
-void hogl_renderbuffer_bind(hogl_renderbuffer* renderbuffer)
-{
+void hogl_renderbuffer_bind(hogl_renderbuffer* renderbuffer) {
 	glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer->id);
+	hogl_gl_check();
 }
 
-void hogl_renderbuffer_free(hogl_renderbuffer* renderbuffer)
-{
+void hogl_renderbuffer_free(hogl_renderbuffer* renderbuffer) {
 	glDeleteRenderbuffers(1, &renderbuffer->id);
+	hogl_gl_check();
 	hogl_free(renderbuffer);
 }

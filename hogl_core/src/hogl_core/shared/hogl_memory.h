@@ -9,7 +9,7 @@
 #ifndef _HOGL_MEMORY_
 #define _HOGL_MEMORY_
 
-#include "hogl_core.h"
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief Allocates size amount of bytes

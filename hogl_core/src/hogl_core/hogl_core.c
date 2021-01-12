@@ -1,6 +1,6 @@
 #include "hogl_core.h"
 
-#include "hogl_core/hogl_log.h"
+#include "hogl_core/shared/hogl_log.h"
 
 #include <gl/glad.h>
 #include <gl/glfw3.h>
