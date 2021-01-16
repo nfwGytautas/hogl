@@ -5,6 +5,8 @@
 #include <gl/glad.h>
 #include <gl/glfw3.h>
 
+#include "hogl_core/audio/hogl_audio_context.h"
+
 void glfw_log_cb(int errCode, const char* msg) {
 	hogl_log_error("GLFW error: [%d] %s", errCode, msg);
 }
@@ -38,6 +40,14 @@ hogl_error __init_suite_graphics() {
 	return HOGL_ERROR_NONE;
 }
 
+hogl_error __init_suite_audio() {
+#ifdef HOGL_SUITE_AUDIO
+	return hogl_audio_init();
+#else
+	return HOGL_ERROR_NONE;
+#endif
+}
+
 hogl_error __init_suite_vf() {
 
 #ifdef HOGL_SUITE_VF
@@ -69,6 +79,11 @@ hogl_error hogl_init(void) {
 		hogl_log_error("Failed to initialize graphics component");
 	}
 
+	err = __init_suite_audio();
+	if (err != HOGL_ERROR_NONE) {
+		hogl_log_error("Failed to initialize audio component");
+	}
+
 	err = __init_suite_vf();
 	if (err != HOGL_ERROR_NONE) {
 		hogl_log_error("Failed to initialize virtual file component");
@@ -80,6 +95,10 @@ hogl_error hogl_init(void) {
 
 void hogl_shutdown(void) {
 	hogl_log_trace("Shutting down hogl");
+
+#ifdef HOGL_SUITE_AUDIO
+	hogl_audio_shutdown();
+#endif
 
 	// Check if all memory is freed, hogl will free all data it ever allocated if done correctly 
 	// so this error will mean there was a memory leak, however if memory tracking is disabled

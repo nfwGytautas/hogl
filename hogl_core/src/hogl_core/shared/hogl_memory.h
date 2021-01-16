@@ -9,6 +9,7 @@
 #ifndef _HOGL_MEMORY_
 #define _HOGL_MEMORY_
 
+#include <stddef.h>
 #include "hogl_core/shared/hogl_def.h"
 
 /**

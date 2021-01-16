@@ -23,21 +23,30 @@ typedef struct _hogl_rstate {
  * @param g Green color channel value
  * @param b Blue color channel value
  * @param a Alpha color channel value
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
-HOGL_API void hogl_render_clear(float r, float g, float b, float a);
+HOGL_API hogl_error hogl_render_clear(float r, float g, float b, float a);
 
 /**
  * @brief Sets the new viewport, does not change the window size
  * @param width Width of the new viewport
  * @param height Height of the new viewport
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
-HOGL_API void hogl_viewport(unsigned int width, unsigned int height);
+HOGL_API hogl_error hogl_viewport(unsigned int width, unsigned int height);
 
 /**
  * @brief Enables/Disables seamless cubemap rendering
  * @param enabled True for enabled, false otherwise
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
-HOGL_API void hogl_seamless_cm(bool enabled);
+HOGL_API hogl_error hogl_seamless_cm(bool enabled);
 
 /**
  * @brief Returns the default render state preset
@@ -54,8 +63,12 @@ HOGL_API void hogl_set_rstate(hogl_rstate rstate);
 /**
  * @brief Enables/Disables rendering depth state check and sets its function comparison function
  * @param depth hogl_render_depth enum value
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_BAD_ARGUMENT		if the depth parameter is not a valid depth option
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
-HOGL_API void hogl_set_depth_test(hogl_render_depth depth);
+HOGL_API hogl_error hogl_set_depth_test(hogl_render_depth depth);
 
 /**
  * @brief Renders the currently bound vao without using a index buffer

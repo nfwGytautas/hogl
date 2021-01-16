@@ -248,6 +248,7 @@ HOGL_API void hogl_vao_bind(hogl_vao* vao);
  * @return Returns error codes:
  *		HOGL_ERROR_NONE					if operation was successful
  *		HOGL_ERROR_ALREADY_ALLOCATED	if the vao buffers were already allocated
+ *		HOGL_ERROR_OPENGL_GENERIC		if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc* descs, size_t size);
 
@@ -259,8 +260,9 @@ HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc* descs, 
  * @param size New buffer size
  * @param data Optional buffer data, NULL if none
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
- *		HOGL_ERROR_OUT_OF_RANGE	if the vbo parameter is larger than the allocated buffer size
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_OUT_OF_RANGE		if the vbo parameter is larger than the allocated buffer size
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* data);
 
@@ -273,9 +275,10 @@ HOGL_API hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, 
  * @param data Pointer to the data that you want to set this will be bound checked if enabled
  * @param size Size of the data array pointer
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
- *		HOGL_ERROR_OUT_OF_RANGE	if the vbo parameter is larger than the allocated buffer size or 
- *								if the vbo allocated size is less than what is being set
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_OUT_OF_RANGE		if the vbo parameter is larger than the allocated buffer size or 
+ *									if the vbo allocated size is less than what is being set
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void* data, size_t size);
 
@@ -290,8 +293,9 @@ HOGL_API void hogl_vao_free(hogl_vao* vao);
  * @param ubo Where to store the new ubo
  * @param desc Description of the new ubo
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
- *		HOGL_ERROR_OUT_OF_RANGE if the stride is 0
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_OUT_OF_RANGE		if the stride is 0
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_ubo_new(hogl_ubo** ubo, hogl_ubo_desc desc);
 
@@ -307,7 +311,8 @@ HOGL_API void hogl_ubo_bind(hogl_ubo* ubo);
  * @param data Data pointer, this will be bound checked if enabled
  * @param size Size of data
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
+ *		HOGL_ERROR_NONE				if operation was successful
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_ubo_data(hogl_ubo* ubo, void* data, size_t size);
 
@@ -325,6 +330,7 @@ HOGL_API void hogl_ubo_free(hogl_ubo* ubo);
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_SHADER_COMPILE	if one of the specified shaders failed to compile
  *		HOGL_ERROR_SHADER_LINK		if the program failed to link
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc);
 
@@ -336,6 +342,7 @@ HOGL_API hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc)
  * @return Returns error codes:
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_UNIFORM_UNKNOWN	if the specified name is not found in the shader
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, unsigned int bp);
 
@@ -347,6 +354,7 @@ HOGL_API hogl_error hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo
  * @return Returns error codes:
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_UNIFORM_UNKNOWN	if the specified name is not found in the shader
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_shader_sampler_location(hogl_shader* shader, const char* sampler_name, unsigned int bp);
 
@@ -367,8 +375,9 @@ HOGL_API void hogl_shader_free(hogl_shader* shader);
  * @param texture Where to store the new object
  * @param desc Description of the texture
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
- *		HOGL_ERROR_BAD_ARGUMENT if the specified mag filter is not allowed
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_BAD_ARGUMENT		if the specified mag filter is not allowed
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_texture_new(hogl_texture** texture, hogl_texture_desc desc);
 
@@ -377,8 +386,9 @@ HOGL_API hogl_error hogl_texture_new(hogl_texture** texture, hogl_texture_desc d
  * @param cm Where to store the new object
  * @param desc Description of the texture
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
-*		HOGL_ERROR_BAD_ARGUMENT if the specified mag filter is not allowed
+ *		HOGL_ERROR_NONE				if operation was successful
+*		HOGL_ERROR_BAD_ARGUMENT		if the specified mag filter is not allowed
+* 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_cm_new(hogl_texture** cm, hogl_texture_desc desc);
 
@@ -394,8 +404,9 @@ HOGL_API void hogl_texture_bind(hogl_texture* texture, int slot);
  * @param cm Cubemap to set
  * @param side Side to set as active
  * @return Returns error codes:
- *		HOGL_ERROR_NONE			if operation was successful
- *		HOGL_ERROR_BAD_ARGUMENT if the specified side is not valid
+ *		HOGL_ERROR_NONE				if operation was successful
+ *		HOGL_ERROR_BAD_ARGUMENT		if the specified side is not valid
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_cm_active_side(hogl_texture* cm, hogl_cm_side side);
 
@@ -426,6 +437,7 @@ HOGL_API void hogl_texture_free(hogl_texture* texture);
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_FBO_INCOMPLETE	if the framebuffer is incomplete, meaning something was wrong with attachments
  *		HOGL_ERROR_BAD_ARGUMENT		if more than 2 renderbuffers are passed
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_framebuffer_new(hogl_framebuffer** framebuffer, hogl_framebuffer_desc desc);
 
@@ -444,6 +456,7 @@ HOGL_API void hogl_framebuffer_bind(hogl_framebuffer* framebuffer);
  * @return Returns error codes:
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_FBO_INCOMPLETE	if the framebuffer is incomplete, meaning something was wrong with attachments
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_framebuffer_ca(hogl_framebuffer* framebuffer, hogl_texture* texture, unsigned int slot, unsigned int mip);
 
@@ -467,6 +480,7 @@ HOGL_API void hogl_reset_framebuffer(void);
  * @return Returns error codes:
  *		HOGL_ERROR_NONE				if operation was successful
  *		HOGL_ERROR_BAD_ARGUMENT		if the format is invalid
+ * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
 */
 HOGL_API hogl_error hogl_renderbuffer_new(hogl_renderbuffer** renderbuffer, hogl_rbuffer_format format, unsigned int width, unsigned int height);
 

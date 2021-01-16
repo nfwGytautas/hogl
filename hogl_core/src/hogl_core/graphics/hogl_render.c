@@ -16,19 +16,21 @@ unsigned int __parse_mode(hogl_render_mode mode) {
 	return 0;
 }
 
-void hogl_render_clear(float r, float g, float b, float a) {
+hogl_error hogl_render_clear(float r, float g, float b, float a) {
 	glClearColor(r, g, b, a);
 	hogl_gl_check();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	hogl_gl_check();
+	return HOGL_ERROR_NONE;
 }
 
-void hogl_viewport(unsigned int width, unsigned int height) {
+hogl_error hogl_viewport(unsigned int width, unsigned int height) {
 	glViewport(0, 0, width, height);
 	hogl_gl_check();
+	return HOGL_ERROR_NONE;
 }
 
-void hogl_seamless_cm(bool enabled) {
+hogl_error hogl_seamless_cm(bool enabled) {
 	if (enabled) {
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		hogl_gl_check();
@@ -37,6 +39,7 @@ void hogl_seamless_cm(bool enabled) {
 		glDisable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		hogl_gl_check();
 	}
+	return HOGL_ERROR_NONE;
 }
 
 hogl_rstate hogl_default_rstate(void) {
@@ -51,12 +54,12 @@ void hogl_set_rstate(hogl_rstate rstate) {
 	
 }
 
-void hogl_set_depth_test(hogl_render_depth depth) {
+hogl_error hogl_set_depth_test(hogl_render_depth depth) {
 	if (depth == HOGL_RD_DISABLED)
 	{
 		glDisable(GL_DEPTH_TEST);
 		hogl_gl_check();
-		return;
+		return HOGL_ERROR_NONE;
 	}
 
 	// Set depth function
@@ -95,7 +98,11 @@ void hogl_set_depth_test(hogl_render_depth depth) {
 		glDepthFunc(GL_GEQUAL);
 		hogl_gl_check();
 		break;
+	default:
+		return HOGL_ERROR_BAD_ARGUMENT;
 	}
+
+	return HOGL_ERROR_NONE;
 }
 
 hogl_error hogl_render_a(hogl_render_mode mode, unsigned int vertices) {

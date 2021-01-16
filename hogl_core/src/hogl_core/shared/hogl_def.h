@@ -24,11 +24,15 @@
 #ifdef HOGL_SUITE_FULL
 	#define HOGL_SUITE_GRAPHICS
 	#define HOGL_SUITE_VF
+	#define HOGL_SUITE_AUDIO
 #endif
 
 #ifndef NULL
 	#define NULL 0
 #endif
+
+#define hogl_gl_check() if (__hogl_gl_check() != 0) { return HOGL_ERROR_OPENGL_GENERIC; }
+#define hogl_al_check() if (__hogl_al_check() != 0) { return HOGL_ERROR_OPENAL_GENERIC; }
 
 /**
 * Enums
@@ -59,6 +63,10 @@ typedef enum {
 	HOGL_ERROR_ENDIAN_MISMATCH,
 	HOGL_ERROR_VF_BAD_NAME,
 	HOGL_ERROR_VF_VFI_MAP,
+	HOGL_ERROR_OPENAL_DEVICE,
+	HOGL_ERROR_OPENAL_CONTEXT,
+	HOGL_ERROR_OPENGL_GENERIC,
+	HOGL_ERROR_OPENAL_GENERIC
 } hogl_error;
 
 /**
@@ -189,8 +197,23 @@ typedef enum {
 } hogl_cm_side;
 
 /**
+ * @brief Audio file playback format
+*/
+typedef enum {
+	HOGL_AF_MONO8,
+	HOGL_AF_MONO16,
+	HOGL_AF_STEREO8,
+	HOGL_AF_STEREO16,
+} hogl_audio_format;
+
+/**
  * @brief Checks if any errors occurred in OpenGL since last call
 */
-HOGL_API void hogl_gl_check(void);
+HOGL_API int __hogl_gl_check(void);
+
+/**
+ * @brief Checks if any errors occurred in OpenAL since last call
+*/
+HOGL_API int __hogl_al_check(void);
 
 #endif

@@ -14,6 +14,7 @@
 * HOGL_DISABLE_GL_BOUND_CHECKING	Disables bound checking for vertex buffer objects
 * HOGL_DISABLE_GL_WARNING			Disables warning that occur when hogl detects an anomaly for example when the user tries to bind a vao before setting all data for vbos
 * HOGL_ENALBE_ALL_GL_LOGS			Enables all by default ignored error messages
+* HOGL_DISABLE_AL_WARNING			Disables warning that occur from OpenAL
 */
 
 /**
@@ -30,6 +31,11 @@
 #include "hogl_core/graphics/hogl_wnd.h"
 #include "hogl_core/graphics/hogl_gl_primitive.h"
 #include "hogl_core/graphics/hogl_render.h"
+#endif
+
+#ifdef HOGL_SUITE_AUDIO
+#include "hogl_core/audio/hogl_audio_context.h"
+#include "hogl_core/audio/hogl_al_primitive.h"
 #endif
 
 #ifdef HOGL_SUITE_VF

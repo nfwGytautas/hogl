@@ -46,12 +46,16 @@ add_library(hogl SHARED ${SOURCE_FILES})
 
 endif()
 
+add_custom_command(TARGET hogl POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/dependencies/OpenAL32.dll"
+        "${CMAKE_BINARY_DIR}/bin")
 
 #set_property(TARGET hogl PROPERTY C_STANDARD 11)
 set_property(TARGET hogl PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # Libraries to link
-target_link_libraries(hogl PRIVATE Glad PRIVATE glfw3)
+target_link_libraries(hogl PRIVATE Glad PRIVATE glfw3 PRIVATE OpenAL32)
 
 # Some MSVC flags
 set_property(TARGET hogl PROPERTY

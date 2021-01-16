@@ -31,6 +31,23 @@ typedef struct _vec3 {
     float z;
 } vec3;
 
+typedef struct _wavfh
+{
+    char ChunkId[4];
+    unsigned long ChunkSize;
+    char FormatTag[4];
+    char SubChunkId[4];
+    unsigned long SubChunkSize;
+    unsigned short AudioFormat;
+    unsigned short NumChannels;
+    unsigned long SampleRate;
+    unsigned long BytesPerSecond;
+    unsigned short BlockAlign;
+    unsigned short BitsPerSample;
+    char DataChunkId[4];
+    unsigned long DataSize;
+} wavfh;
+
 const unsigned int X_SEGMENTS = 64;
 const unsigned int Y_SEGMENTS = 64;
 const float PI = 3.14159265359;
@@ -99,6 +116,11 @@ hogl_texture* envCubemap;
 hogl_texture* irradianceMap;
 hogl_texture* prefilterMap;
 hogl_texture* brdfLUTTexture;
+
+hogl_asource* audioSource;
+hogl_abuffer* audioBuffer;
+
+float audio_y = 0.0f;
 
 float* generate_sphere_vertices(void) {
     float* result = NULL;
@@ -522,9 +544,9 @@ void load_textures(void) {
     //load_image(&wallRoughnessMap, "res/pbr/wall/roughness.png");
     //load_image(&wallAOMap, "res/pbr/wall/ao.png");
 
-    //load_hdr(&hdr, "res/hdr/newport_loft.hdr");
+    load_hdr(&hdr, "res/hdr/newport_loft.hdr");
     //load_hdr(&hdr, "res/hdr/dikhololo_night_4k.hdr");
-    load_hdr(&hdr, "res/hdr/herkulessaulen_4k.hdr");
+    //load_hdr(&hdr, "res/hdr/herkulessaulen_4k.hdr");
 
     desc.min_filter = HOGL_FT_LINEAR_MIPMAP_LINEAR;
     desc.mag_filter = HOGL_FT_LINEAR;
@@ -716,12 +738,64 @@ void mat_init(float* mret) {
     mret[3 + 3 * 4] = 1.0f;
 }
 
+void load_audio(hogl_abuffer_desc* desc) {
+    int error;
+    wavfh header;
+    FILE* filePtr;
+    unsigned int count;
+
+    // Open the wave file in binary.
+    error = fopen_s(&filePtr, "res/example_audio_mono.wav", "rb");
+    if (error != 0) {
+        return;
+    }
+
+    // Read in the wave file header.
+    count = fread(
+        &header,
+        sizeof(wavfh),
+        1,
+        filePtr);
+    if (count != 1) {
+        return;
+    }
+
+    // Reserve data
+    desc->data = hogl_malloc(header.DataSize);
+    desc->data_size = header.DataSize;
+    desc->sample_rate = header.SampleRate;
+
+    // Seek to the start of the contents
+    fseek(filePtr, sizeof(wavfh), SEEK_SET);
+
+    // Read buffer
+    count = fread(
+        desc->data,
+        1, // unsigned char
+        desc->data_size,
+        filePtr);
+
+    // Close the file
+    fclose(filePtr);
+
+    // Configure numeric format
+    if (header.NumChannels == 1)
+    {
+        desc->format = header.BitsPerSample == 8 ? HOGL_AF_MONO8 : HOGL_AF_MONO16;
+    }
+    else {
+        desc->format = header.BitsPerSample == 8 ? HOGL_AF_STEREO8 : HOGL_AF_STEREO16;
+    }
+}
+
 void prepare_pbr(void) {
     float views[6][16];
     hogl_rstate rstate;
     vec3 eye = { 0 };
     vec3 target = { 0 };
     vec3 up = { 0 };
+    float listenerOrientation[6];
+    hogl_abuffer_desc adesc;
 
     mat_init(&views[0][0]);
     mat_init(&views[1][0]);
@@ -866,6 +940,27 @@ void prepare_pbr(void) {
 
     hogl_reset_framebuffer();
     hogl_viewport(1280, 720);
+
+    hogl_memset(&listenerOrientation[0], 0, 6);
+    listenerOrientation[2] = 1.0f;
+    listenerOrientation[4] = 1.0f;
+
+    hogl_listener_position(0.0f, 0.0f, 1.0f);
+    hogl_listener_velocity(0.0f, 0.0f, 0.0f);
+    hogl_listener_orientation(&listenerOrientation[0]);
+
+    hogl_source_new(&audioSource);
+    hogl_source_pitch(audioSource, 1.0f);
+    hogl_source_gain(audioSource, 1.0f);
+    hogl_source_position(audioSource, 0.0f, 0.0f, 0.0f);
+    hogl_source_velocity(audioSource, 0.0f, 0, 0.0f);
+    hogl_source_loop(audioSource, true);
+
+    load_audio(&adesc);
+    hogl_abuffer_new(&audioBuffer, adesc);
+    hogl_source_buffer(audioSource, audioBuffer);
+    hogl_source_play(audioSource);
+    hogl_free(adesc.data);
 }
 
 void render_pbr(void) {
@@ -972,6 +1067,10 @@ void render_pbr(void) {
     hogl_shader_bind(backgroundShader);
     hogl_texture_bind(envCubemap, 0);
     hogl_render_a(HOGL_RM_TRIANGLES, 36);
+
+    //hogl_source_position(audioSource, 0.0f, audio_y, 0.0f);
+    hogl_listener_position(0.0f, audio_y, 0.0f);
+    audio_y += 0.5f;
 }
 
 void pbr_free(void) {
@@ -1029,4 +1128,7 @@ void pbr_free(void) {
     hogl_texture_free(irradianceMap);
     hogl_texture_free(prefilterMap);
     hogl_texture_free(brdfLUTTexture);
+
+    hogl_source_free(audioSource);
+    hogl_abuffer_free(audioBuffer);
 }
