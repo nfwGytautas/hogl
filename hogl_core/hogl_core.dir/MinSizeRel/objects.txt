@@ -1,0 +1,11 @@
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_al_primitive.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_audio_context.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_gl_primitive.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_render.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_wnd.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_core.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_vf.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_os.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_def.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_log.obj
+C:/dev/hogl/hogl_core/hogl_core.dir/MinSizeRel/hogl_memory.obj

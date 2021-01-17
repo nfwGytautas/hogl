@@ -3,21 +3,22 @@
 
 #include "hogl_core/hogl_core.h"
 #include "pbr.h"
+#include "ui.h"
 
-int main(int argc, char** argv) {
+void pbr(void) {
 	hogl_wnd* hwindow = NULL;
 	hogl_wi* hwi = NULL;
 
 	// Initialize hogl
 	if (hogl_init() != HOGL_ERROR_NONE) {
 		// Failed to initialize hogl
-		return 1;
+		return;
 	}
 
 	// Create new window
 	if (hogl_new_window(&hwindow) != HOGL_ERROR_NONE) {
 		// Failed to create a window
-		return 3;
+		return;
 	}
 
 	// Not necessary but just configures to the default state
@@ -42,6 +43,11 @@ int main(int argc, char** argv) {
 	hogl_destroy_window(hwindow);
 
 	hogl_shutdown();
+}
+
+int main(int argc, char** argv) {
+	ui();
+	//pbr();
 
 	return 0;
 }

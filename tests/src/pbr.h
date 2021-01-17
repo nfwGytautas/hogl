@@ -124,7 +124,7 @@ float audio_y = 0.0f;
 
 float* generate_sphere_vertices(void) {
     float* result = NULL;
-    result = hogl_malloc((3 + 2 + 3) * (Y_SEGMENTS + 1) * (X_SEGMENTS + 1) * sizeof(float));
+    result = (float*)hogl_malloc((3 + 2 + 3) * (Y_SEGMENTS + 1) * (X_SEGMENTS + 1) * sizeof(float));
 
     unsigned int offset = 0;
     for (unsigned int y = 0; y <= Y_SEGMENTS; ++y)
@@ -154,7 +154,7 @@ float* generate_sphere_vertices(void) {
 unsigned int* generate_sphere_indices(void) {
     unsigned int indexCount = 0;
     unsigned int* result = NULL;
-    result = hogl_malloc(2 * Y_SEGMENTS * (X_SEGMENTS + 1) * sizeof(unsigned int));
+    result = (unsigned int*)hogl_malloc(2 * Y_SEGMENTS * (X_SEGMENTS + 1) * sizeof(unsigned int));
 
     unsigned int offset = 0;
     for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
@@ -432,7 +432,7 @@ void load_image(hogl_texture** texture, const char* file) {
     desc.mag_filter = HOGL_FT_LINEAR;
     desc.min_filter = HOGL_FT_LINEAR_MIPMAP_LINEAR;
 
-    data.data = stbi_load(file, &data.width, &data.height, &components, 0);
+    data.data = stbi_load(file, (int*)&data.width, (int*)&data.height, &components, 0);
 
     if (data.data == NULL) {
         hogl_log_error("FAILED TO LOAD FILE %s", file);
@@ -477,7 +477,7 @@ void load_hdr(hogl_texture** texture, const char* file) {
     desc.mag_filter = HOGL_FT_LINEAR;
     desc.min_filter = HOGL_FT_LINEAR;
 
-    data.data = stbi_loadf(file, &data.width, &data.height, &components, 0);
+    data.data = stbi_loadf(file, (int*)&data.width, (int*)&data.height, &components, 0);
 
     if (components == 1)
     {
@@ -565,7 +565,7 @@ void load_textures(void) {
     hogl_cm_new(&envCubemap, desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(envCubemap, i);
+        hogl_cm_active_side(envCubemap, (hogl_cm_side)i);
         hogl_set_texture_data(envCubemap, &data);
     }
 
@@ -577,7 +577,7 @@ void load_textures(void) {
     hogl_cm_new(&irradianceMap, desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(irradianceMap, i);
+        hogl_cm_active_side(irradianceMap, (hogl_cm_side)i);
         hogl_set_texture_data(irradianceMap, &data);
     }
 
@@ -589,7 +589,7 @@ void load_textures(void) {
     hogl_cm_new(&prefilterMap, desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(prefilterMap, i);
+        hogl_cm_active_side(prefilterMap, (hogl_cm_side)i);
         hogl_set_texture_data(prefilterMap, &data);
     }
 
@@ -796,6 +796,7 @@ void prepare_pbr(void) {
     vec3 up = { 0 };
     float listenerOrientation[6];
     hogl_abuffer_desc adesc;
+    adesc.data = NULL;
 
     mat_init(&views[0][0]);
     mat_init(&views[1][0]);
@@ -866,7 +867,7 @@ void prepare_pbr(void) {
         memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
         hogl_ubo_data(matricesUBO, &md, sizeof(md));
 
-        hogl_cm_active_side(envCubemap, i);
+        hogl_cm_active_side(envCubemap, (hogl_cm_side)i);
         hogl_framebuffer_ca(fbo, envCubemap, 0, 0);
 
         hogl_render_clear(0.5f, 0, 0, 0);
@@ -886,7 +887,7 @@ void prepare_pbr(void) {
         memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
         hogl_ubo_data(matricesUBO, &md, sizeof(md));
     
-        hogl_cm_active_side(irradianceMap, i);
+        hogl_cm_active_side(irradianceMap, (hogl_cm_side)i);
         hogl_framebuffer_ca(fbo, irradianceMap, 0, 0);
     
         hogl_render_clear(0, 0, 0, 0);
@@ -914,7 +915,7 @@ void prepare_pbr(void) {
             memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
             hogl_ubo_data(matricesUBO, &md, sizeof(md));
     
-            hogl_cm_active_side(prefilterMap, i);
+            hogl_cm_active_side(prefilterMap, (hogl_cm_side)i);
             hogl_framebuffer_ca(fbo, prefilterMap, 0, mip);
     
             hogl_render_clear(0, 0, 0, 0);

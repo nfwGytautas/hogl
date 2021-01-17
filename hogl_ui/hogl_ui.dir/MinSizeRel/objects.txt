@@ -1,0 +1,1 @@
+C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/hogl_ui.obj
