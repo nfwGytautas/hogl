@@ -1,1 +1,10 @@
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/application.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/element.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/transform.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/ui_parser.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/vertex_list.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/button.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/free_layout.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/region.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/root.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/hogl_ui.obj

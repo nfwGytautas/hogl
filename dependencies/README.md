@@ -6,3 +6,5 @@ This folder contains the libraries that are bundled inside the hogl C api
 2. stb_image used to provide the ability to load image data (Compiled into the source with MIT license)
 
 3. openal-soft used to provide sound API for the library (Must be dynamically linked because of LPGL)
+
+4. pugixml used to provide xml parsing (Static linked with MIT)

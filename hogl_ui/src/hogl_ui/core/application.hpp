@@ -1,6 +1,11 @@
 #pragma once
 
+#include <unordered_map>
 #include "hogl_ui/shared/hogl_ui_def.hpp"
+#include "hogl_ui/core/element.hpp"
+#include "hogl_ui/elements/root.hpp"
+#include "hogl_ui/core/vertex_list.hpp"
+#include "hogl_core/graphics/hogl_wnd.h"
 
 namespace hogl_ui {
 
@@ -34,7 +39,18 @@ namespace hogl_ui {
 		 * @return Pointer to application instance
 		*/
 		static application* get_instance();
+
 	private:
+		void setup_vlists();
+
+	private:
+		hogl_wnd* m_window = nullptr;
+		hogl_wi* m_wi = nullptr;
+
+		root* m_root = nullptr;
+		std::unordered_map<std::string, element*> m_elements;
+
+		vertex_lists m_vlist = {};
 	};
 
 }

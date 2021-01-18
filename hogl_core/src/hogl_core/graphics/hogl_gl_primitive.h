@@ -331,6 +331,7 @@ HOGL_API void hogl_ubo_free(hogl_ubo* ubo);
  *		HOGL_ERROR_SHADER_COMPILE	if one of the specified shaders failed to compile
  *		HOGL_ERROR_SHADER_LINK		if the program failed to link
  * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
+ *		HOGL_ERROR_BAD_ARGUMENT		if vertex or fragment shader string is empty
 */
 HOGL_API hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc);
 

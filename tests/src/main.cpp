@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <fstream>
+#include <sstream>
+
 #include "hogl_core/hogl_core.h"
 #include "pbr.h"
 #include "ui.h"

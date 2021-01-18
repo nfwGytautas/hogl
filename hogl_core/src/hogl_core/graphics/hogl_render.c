@@ -55,8 +55,7 @@ void hogl_set_rstate(hogl_rstate rstate) {
 }
 
 hogl_error hogl_set_depth_test(hogl_render_depth depth) {
-	if (depth == HOGL_RD_DISABLED)
-	{
+	if (depth == HOGL_RD_DISABLED) {
 		glDisable(GL_DEPTH_TEST);
 		hogl_gl_check();
 		return HOGL_ERROR_NONE;

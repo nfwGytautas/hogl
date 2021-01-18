@@ -385,6 +385,8 @@ hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* dat
 	glBufferData(vao->vbos[vbo].type, size, data, vao->vbos[vbo].usage);
 	hogl_gl_check();
 
+	vao->vbos[vbo].size = size;
+
 	return HOGL_ERROR_NONE;
 }
 
@@ -492,6 +494,11 @@ hogl_error hogl_shader_new(hogl_shader** shader, hogl_shader_desc desc) {
 	unsigned int program = 0;
 	unsigned int vertex_shader = 0;
 	unsigned int fragment_shader = 0;
+
+	if (strlen(desc.vertex_source) <= 0 || strlen(desc.fragment_source) <= 0) {
+		hogl_log_error("Empty vertex or fragment source");
+		return HOGL_ERROR_BAD_ARGUMENT;
+	}
 
 	// Vertex
 	vertex_shader = glCreateShader(GL_VERTEX_SHADER);

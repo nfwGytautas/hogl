@@ -20,7 +20,7 @@ set_property(TARGET hogl_ui PROPERTY CXX_STANDARD 17)
 set_property(TARGET hogl_ui PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # Libraries to link
-target_link_libraries(hogl_ui PRIVATE hogl_core)
+target_link_libraries(hogl_ui PRIVATE hogl_core PRIVATE pugixml)
 
 # Some MSVC flags
 set_property(TARGET hogl_ui PROPERTY
