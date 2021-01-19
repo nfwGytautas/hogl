@@ -9,6 +9,16 @@
 namespace hogl_ui {
 
 	/**
+	 * @brief Simple union to parse hex color values into rgb
+	*/
+	union color {
+		unsigned int hex;
+		struct {
+			unsigned char b, g, r;
+		};
+	};
+
+	/**
 	 * @brief Interface for all elements
 	*/
 	class HOGL_UI_API element {
@@ -30,10 +40,9 @@ namespace hogl_ui {
 		virtual void render() = 0;
 
 		/**
-		 * @brief Sends a transform command which contains the ratios from 0.0f < val <= 1.0f that specify how to shift the position, scale, etc. of the element
-		 * @param t Transform information
+		 * @brief Forces the element to recalculate its vertices using new transform information
 		*/
-		virtual void transform(const tinfo& t) = 0;
+		virtual void transform() = 0;
 
 		/**
 		 * @brief Adds a child to the container, the container takes ownership of the element
@@ -45,9 +54,30 @@ namespace hogl_ui {
 
 		std::string get_name() const;
 		void set_name(const std::string name);
+
+		/**
+		 * @brief Sets the transform of the region
+		 * @param t New transform
+		*/
+		void set_transform(const tinfo& t);
+
+		/**
+		 * @brief Returns a reference to the region transformation
+		 * @return Reference to region transform
+		*/
+		tinfo& get_transform();
+
+		/**
+		 * @brief Sets the element background to the one specified
+		 * @param c 
+		*/
+		virtual void set_background(color c) {}
+
+		element* get_parent();
 	protected:
-		element* parent = nullptr;
-		std::string name = "";
+		element* p_parent = nullptr;
+		std::string p_name = "";
+		tinfo p_transform;
 	};
 
 }

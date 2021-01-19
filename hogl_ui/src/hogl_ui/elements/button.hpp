@@ -16,7 +16,8 @@ namespace hogl_ui {
 		// Inherited via element
 		virtual void queue_vertices(const vertex_lists& vlist) override;
 		virtual void render() override;
-		virtual void transform(const tinfo& t) override;
+		virtual void transform() override;
+		virtual void set_background(color c) override;
 	private:
 		std::vector<float> vertices = {};
 		std::vector<unsigned int> indices = {};

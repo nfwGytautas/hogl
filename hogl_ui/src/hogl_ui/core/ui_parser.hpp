@@ -19,7 +19,6 @@ namespace hogl_ui {
 		 * @return True if layout parsed successfully, false otherwise 
 		*/
 		bool parse(const std::string& file);
-
 	private:
 		element* m_root;
 	};

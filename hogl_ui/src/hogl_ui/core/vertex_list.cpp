@@ -6,12 +6,14 @@
 constexpr auto VERTICE_VBO_ID = 0;
 constexpr auto INDICE_VBO_ID = 1;
 
+constexpr auto VERTICE_COUNT = 8;
+
 namespace hogl_ui {
 	vertex_list::vertex_list() {
 		hogl_vao_new(&m_vao);
 
 		// Create the buffer, doesn't matter about the initial size, just the attributes
-		hogl_ap_desc ap_desc[2];
+		hogl_ap_desc ap_desc[3];
 
 		// Vertices
 		ap_desc[0].divisor = 0;
@@ -19,7 +21,7 @@ namespace hogl_ui {
 		ap_desc[0].index = 0;
 		ap_desc[0].normalized = false;
 		ap_desc[0].offset = 0;
-		ap_desc[0].stride = 5 * sizeof(float);
+		ap_desc[0].stride = VERTICE_COUNT * sizeof(float);
 		ap_desc[0].type = HOGL_ET_FLOAT;
 
 		// UV
@@ -28,8 +30,17 @@ namespace hogl_ui {
 		ap_desc[1].index = 1;
 		ap_desc[1].normalized = false;
 		ap_desc[1].offset = 3 * sizeof(float);
-		ap_desc[1].stride = 5 * sizeof(float);
+		ap_desc[1].stride = VERTICE_COUNT * sizeof(float);
 		ap_desc[1].type = HOGL_ET_FLOAT;
+
+		// Color
+		ap_desc[2].divisor = 0;
+		ap_desc[2].ecount = 3;
+		ap_desc[2].index = 2;
+		ap_desc[2].normalized = false;
+		ap_desc[2].offset = 5 * sizeof(float);
+		ap_desc[2].stride = VERTICE_COUNT * sizeof(float);
+		ap_desc[2].type = HOGL_ET_FLOAT;
 
 		hogl_vbo_desc desc[2];
 		desc[0].usage = HOGL_VBOU_DYNAMIC;
@@ -37,7 +48,7 @@ namespace hogl_ui {
 		desc[0].data = nullptr;
 		desc[0].data_size = 0;
 		desc[0].ap_desc = &ap_desc[0];
-		desc[0].desc_size = 2;
+		desc[0].desc_size = 3;
 
 		desc[1].usage = HOGL_VBOU_DYNAMIC;
 		desc[1].type = HOGL_VBOT_ELEMENT_BUFFER;
@@ -71,7 +82,7 @@ namespace hogl_ui {
 	}
 
 	void vertex_list::add_range(const std::vector<float>& data, const std::vector<unsigned int>& indices) {
-		size_t s = m_vertices.size() / 5;
+		size_t s = m_vertices.size() / VERTICE_COUNT;
 		
 		m_vertices.insert(m_vertices.end(), data.begin(), data.end());
 		for (const unsigned int& i : indices) {

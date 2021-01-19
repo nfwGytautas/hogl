@@ -40,6 +40,15 @@ namespace hogl_ui {
 		*/
 		static application* get_instance();
 
+		/**
+		 * @brief Returns the window height
+		*/
+		unsigned int get_window_height() const;
+
+		/**
+		 * @brief Returns the window width
+		*/
+		unsigned int get_window_width() const;
 	private:
 		void setup_vlists();
 

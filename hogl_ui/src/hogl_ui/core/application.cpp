@@ -57,6 +57,9 @@ namespace hogl_ui {
 
 		// Root element
 		m_root = new root();
+		tinfo& t = m_root->get_transform();
+		t.actual_width = this->get_window_width();
+		t.actual_height = this->get_window_height();
 
 		hogl_log_trace("Application created");
 
@@ -79,7 +82,7 @@ namespace hogl_ui {
 
 	void application::show() {
 		// Setup initial transform
-		m_root->transform(tinfo());
+		m_root->transform();
 
 		while (m_wi->is_open) {
 			// Clear
@@ -102,6 +105,14 @@ namespace hogl_ui {
 
 	application* application::get_instance() {
 		return gs_application;
+	}
+
+	unsigned int application::get_window_height() const {
+		return 720;
+	}
+
+	unsigned int application::get_window_width() const {
+		return 1280;
 	}
 
 	void application::setup_vlists() {

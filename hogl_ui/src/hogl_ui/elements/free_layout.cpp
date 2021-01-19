@@ -28,9 +28,20 @@ namespace hogl_ui {
         }
     }
 
-    void free_layout::transform(const tinfo& t) {
+    void free_layout::transform() {
+        // Update object transform
+        tinfo& et = this->get_transform();
+        tinfo& pt = this->get_parent()->get_transform();
+
+        et.actual_width = pt.actual_width * et.rel_width;
+        et.actual_height = pt.actual_height * et.rel_height;
+
+        et.actual_x = pt.actual_x + pt.actual_width * (et.rel_x);
+        et.actual_y = pt.actual_y + pt.actual_height * (et.rel_y);
+
+        // The layout does not render anything just passes the command further
         for (element* c : m_regions) {
-            c->transform(t);
+            c->transform();
         }
     }
 

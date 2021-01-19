@@ -9,23 +9,47 @@ namespace hogl_ui {
 	*/
 	class HOGL_UI_API tinfo {
 	public:
-		float x_offset = 0.0f;
-		float y_offset = 0.0f;
-		float z_offset = 0.0f;
-
-		float x_scale = 1.0f;
-		float y_scale = 1.0f;
-		float z_scale = 1.0f;
-
-		tinfo();
-		tinfo(float xoff, float yoff, float zoff, float xscale, float yscale, float zscale);
+		/**
+		 * @brief Actual width
+		*/
+		float actual_width = 0.0f;
 
 		/**
-		 * @brief Combines this transformation with the specified and returns a new one
-		 * @param t Transformation to combine with
-		 * @return Combined transformation
+		 * @brief Actual height
 		*/
-		tinfo combine(const tinfo& t) const;
+		float actual_height = 0.0f;
+
+		/**
+		* @brief Actual x position value, from -1 to 1, calculated using actual_width
+		*/
+		float actual_x = 0.0f;
+
+		/**
+		* @brief Actual y position value, from -1 to 1, calculated using actual_height
+		*/
+		float actual_y = 0.0f;
+
+		/**
+		 * @brief Percent of parent width
+		*/
+		float rel_width = 1.0f;
+
+		/**
+		 * @brief Percent of parent height
+		*/
+		float rel_height = 1.0f;
+
+		/**
+		* @brief Percent of x position
+		*/
+		float rel_x = 0.0f;
+
+		/**
+		* @brief Percent of y position
+		*/
+		float rel_y = 0.0f;
+
+		tinfo();
 	};
 
 }

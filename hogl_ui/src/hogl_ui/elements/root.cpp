@@ -20,8 +20,9 @@ namespace hogl_ui {
 		m_layout->render();
 	}
 
-	void root::transform(const tinfo& t) {
-		m_layout->transform(t);
+	void root::transform() {
+		// Root will always have a screen width and height of the window and cannot calculate it otherwise
+		m_layout->transform();
 	}
 
 	bool root::add_child(element* e, const std::string& region) {

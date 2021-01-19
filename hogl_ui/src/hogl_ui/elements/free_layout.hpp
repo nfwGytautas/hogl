@@ -21,7 +21,7 @@ namespace hogl_ui {
 		// Inherited via element
 		virtual void queue_vertices(const vertex_lists& vlist) override;
 		virtual void render() override;
-		virtual void transform(const tinfo& t) override;
+		virtual void transform() override;
 		virtual bool add_child(element* e, const std::string& region) override;
 	private:
 		std::vector<region*> m_regions;
