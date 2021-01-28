@@ -1,5 +1,6 @@
 C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/application.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/element.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/input.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/transform.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/ui_parser.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/MinSizeRel/vertex_list.obj

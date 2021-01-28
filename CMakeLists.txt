@@ -19,4 +19,5 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
 add_subdirectory(hogl_core)
 add_subdirectory(hogl_ui)
+add_subdirectory(hogl)
 add_subdirectory(tests)

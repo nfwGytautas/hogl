@@ -61,6 +61,9 @@ namespace hogl_ui {
 		t.actual_width = this->get_window_width();
 		t.actual_height = this->get_window_height();
 
+		// Setup event layers
+
+
 		hogl_log_trace("Application created");
 
 		gs_application = this;

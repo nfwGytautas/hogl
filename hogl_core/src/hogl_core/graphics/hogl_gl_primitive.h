@@ -5,14 +5,20 @@
 #ifndef _HOGL_GL_PRIMITIVE_
 #define _HOGL_GL_PRIMITIVE_
 
-#include "hogl_core/shared/hogl_def.h"
 #include <stdbool.h>
+#include <stdint.h>
+#include "hogl_core/shared/hogl_def.h"
 
 /**
  * @brief Vertex array object contains data about the object that is being rendered, it is made of
  * vertex buffers, that contains the actual data
 */
 typedef struct _hogl_vao hogl_vao;
+
+/**
+ * @brief Vertex buffer object contains data that is reference by vertex array objects 
+*/
+typedef struct _hogl_vbo hogl_vbo;
 
 /**
  * @brief Texture is used to provide any type of image to GPU or query data from OpenGL and store into
@@ -48,7 +54,7 @@ typedef struct _hogl_renderbuffer hogl_renderbuffer;
 */
 typedef struct _hogl_ap_desc {
 	/**
-	 * @brief Internal attribute pointer index from 0 to max amount of attributes
+	 * @brief Attribute pointer index
 	*/
 	int index;
 
@@ -66,13 +72,6 @@ typedef struct _hogl_ap_desc {
 	 * @brief Normalize data or not
 	*/
 	bool normalized;
-
-	/**
-	 * @brief Single ap entry size, this is the space inside a buffer for a single element for example passing a 4x4 matrix
-	 * the stride will be sizeof(16 * sizeof(type)), for a standard float matrix this will be 16 * 4 = 64 bytes, this allows
-	 * to store large amounts of matrices such as transformation matrices inside a single buffer
-	*/
-	size_t stride;
 
 	/**
 	 * @brief Number of bytes until start of data, just like with stride if for example we are passing a matrix this will be 
@@ -96,6 +95,13 @@ typedef struct _hogl_vbo_desc {
 	hogl_vbo_type type;
 	hogl_vbo_usage usage;
 
+	/**
+	 * @brief Single entry size, this is the space inside a buffer for a single element for example passing a 4x4 matrix
+	 * the stride will be sizeof(16 * sizeof(type)), for a standard float matrix this will be 16 * 4 = 64 bytes, this allows
+	 * to store large amounts of matrices such as transformation matrices inside a single buffer
+	*/
+	size_t stride;
+
 	hogl_ap_desc* ap_desc;
 	size_t desc_size;
 
@@ -106,8 +112,8 @@ typedef struct _hogl_vbo_desc {
 
 	/**
 	 * @brief Initial data inside a buffer, if the usage is static this should
-	 * contain the data and shouldn't change. If no data is present then this has to
-	 * be NULL
+	 * contain the data and shouldn't change (after construction can be freed). 
+	 * If no data is present then this has to be NULL
 	*/
 	void* data;
 } hogl_vbo_desc;
@@ -228,6 +234,41 @@ typedef struct _hogl_texture_data {
 } hogl_texture_data;
 
 /**
+ * @brief Creates a new vertex buffer object
+ * @param vbo Where to store the result
+*/
+HOGL_API void hogl_vbo_new(hogl_vbo** vbo, hogl_vbo_desc desc);
+
+/**
+ * @brief Sets the buffer object data, if the size is different from the current size
+ * the buffer will be resized
+ * @param vbo Buffer object
+ * @param data New data
+ * @param size Size of the new buffer object (if this is 0 then the vbo will take its own current size)
+ * @param offset Offset for VBO data
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE					if operation was successful
+ *		HOGL_ERROR_BAD_ARGUMENT			if size does not divide by stride
+ *		HOGL_ERROR_OPENGL_GENERIC		if hogl_gl_check failed at any point
+*/
+HOGL_API hogl_error hogl_vbo_data(hogl_vbo* vbo, void* data, size_t size, size_t offset);
+
+/**
+ * @brief Binds the VBO to currently bound VAO in the designated slot
+ * @param vbo VBO to bind
+ * @return Returns error codes:
+ *		HOGL_ERROR_NONE					if operation was successful
+ *		HOGL_ERROR_OPENGL_GENERIC		if hogl_gl_check failed at any point
+*/
+HOGL_API hogl_error hogl_vbo_bind(hogl_vbo* vbo);
+
+/**
+ * @brief Frees the vertex buffer object
+ * @param vbo Buffer object
+*/
+HOGL_API void hogl_vbo_free(hogl_vbo* vbo);
+
+/**
  * @brief Create a new vao with the specified description and store inside the pointer
  * @param vao Where to store the new vao
 */
@@ -238,49 +279,6 @@ HOGL_API void hogl_vao_new(hogl_vao** vao);
  * @param vao VAO to bind
 */
 HOGL_API void hogl_vao_bind(hogl_vao* vao);
-
-/**
- * @brief Allocates an internal vertex buffer array for the vao, this function can only be called once, this means adding
- * more buffers later is not allowed. The newly created vertex buffers are stored as a range from 0 to size - 1
- * @param vao VAO to allocated buffers for
- * @param descs Array of vbo descriptions
- * @param size Size of types array
- * @return Returns error codes:
- *		HOGL_ERROR_NONE					if operation was successful
- *		HOGL_ERROR_ALREADY_ALLOCATED	if the vao buffers were already allocated
- *		HOGL_ERROR_OPENGL_GENERIC		if hogl_gl_check failed at any point
-*/
-HOGL_API hogl_error hogl_vao_alloc_buffers(hogl_vao* vao, hogl_vbo_desc* descs, size_t size);
-
-/**
- * @brief Resizes the specified vbo inside a vao with the new size and optionally fills it with data,
- * keeps the usage and type the same
- * @param vao VAO where the vbo is
- * @param vbo Internal vbo index
- * @param size New buffer size
- * @param data Optional buffer data, NULL if none
- * @return Returns error codes:
- *		HOGL_ERROR_NONE				if operation was successful
- *		HOGL_ERROR_OUT_OF_RANGE		if the vbo parameter is larger than the allocated buffer size
- * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
-*/
-HOGL_API hogl_error hogl_vao_buffer_resize(hogl_vao* vao, int vbo, size_t size, void* data);
-
-/**
- * @brief Sets the data of a vertex buffer that is stored inside a vertex array, before using this function make sure to
- * allocate buffers inside a vao first
- * @param vao Vertex array where the vertex buffer is being set
- * @param vbo Internal index of the vertex buffer
- * @param vbo_offset Offset int bytes from the start of the vbo internal buffer
- * @param data Pointer to the data that you want to set this will be bound checked if enabled
- * @param size Size of the data array pointer
- * @return Returns error codes:
- *		HOGL_ERROR_NONE				if operation was successful
- *		HOGL_ERROR_OUT_OF_RANGE		if the vbo parameter is larger than the allocated buffer size or 
- *									if the vbo allocated size is less than what is being set
- * 		HOGL_ERROR_OPENGL_GENERIC	if hogl_gl_check failed at any point
-*/
-HOGL_API hogl_error hogl_vao_buffer_data(hogl_vao* vao, int vbo, size_t vbo_offset, void* data, size_t size);
 
 /**
  * @brief Frees all resources associated with the specified vao

@@ -20,7 +20,7 @@ add_custom_command(TARGET hogl_core POST_BUILD
         "${PROJECT_SOURCE_DIR}/dependencies/OpenAL32.dll"
         "${CMAKE_BINARY_DIR}/bin")
 
-set_property(TARGET hogl_core PROPERTY C_STANDARD 11)
+#set_property(TARGET hogl_core PROPERTY C_STANDARD 11)
 set_property(TARGET hogl_core PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 # Libraries to link

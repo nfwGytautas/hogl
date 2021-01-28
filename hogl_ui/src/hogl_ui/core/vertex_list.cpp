@@ -21,7 +21,6 @@ namespace hogl_ui {
 		ap_desc[0].index = 0;
 		ap_desc[0].normalized = false;
 		ap_desc[0].offset = 0;
-		ap_desc[0].stride = VERTICE_COUNT * sizeof(float);
 		ap_desc[0].type = HOGL_ET_FLOAT;
 
 		// UV
@@ -30,7 +29,6 @@ namespace hogl_ui {
 		ap_desc[1].index = 1;
 		ap_desc[1].normalized = false;
 		ap_desc[1].offset = 3 * sizeof(float);
-		ap_desc[1].stride = VERTICE_COUNT * sizeof(float);
 		ap_desc[1].type = HOGL_ET_FLOAT;
 
 		// Color
@@ -39,7 +37,6 @@ namespace hogl_ui {
 		ap_desc[2].index = 2;
 		ap_desc[2].normalized = false;
 		ap_desc[2].offset = 5 * sizeof(float);
-		ap_desc[2].stride = VERTICE_COUNT * sizeof(float);
 		ap_desc[2].type = HOGL_ET_FLOAT;
 
 		hogl_vbo_desc desc[2];
@@ -49,6 +46,7 @@ namespace hogl_ui {
 		desc[0].data_size = 0;
 		desc[0].ap_desc = &ap_desc[0];
 		desc[0].desc_size = 3;
+		desc[0].stride = VERTICE_COUNT * sizeof(float);
 
 		desc[1].usage = HOGL_VBOU_DYNAMIC;
 		desc[1].type = HOGL_VBOT_ELEMENT_BUFFER;
@@ -56,7 +54,12 @@ namespace hogl_ui {
 		desc[1].data_size = 0;
 
 		// Allocate buffer
-		hogl_vao_alloc_buffers(m_vao, desc, 2);
+		hogl_vbo_new(&m_vbo, desc[0]);
+		hogl_vbo_new(&m_ebo, desc[1]);
+
+		hogl_vao_bind(m_vao);
+		hogl_vbo_bind(m_vbo);
+		hogl_vbo_bind(m_ebo);
 	}
 
 	vertex_list::~vertex_list() {
@@ -98,11 +101,11 @@ namespace hogl_ui {
 		
 		if (m_lfsize < m_vertices.size()) {
 			// We need to resize the vbo
-			if (hogl_vao_buffer_resize(m_vao, VERTICE_VBO_ID, m_vertices.size() * sizeof(float), m_vertices.data()) != HOGL_ERROR_NONE) {
+			if (hogl_vbo_data(m_vbo, m_vertices.data(), m_vertices.size() * sizeof(float), 0) != HOGL_ERROR_NONE) {
 				return;
 			}
 		
-			if (hogl_vao_buffer_resize(m_vao, INDICE_VBO_ID, m_indices.size() * sizeof(unsigned int), m_indices.data()) != HOGL_ERROR_NONE) {
+			if (hogl_vbo_data(m_ebo, m_indices.data(), m_indices.size() * sizeof(unsigned int), 0) != HOGL_ERROR_NONE) {
 				return;
 			}
 		
@@ -111,12 +114,12 @@ namespace hogl_ui {
 		else {
 			// TODO: Optimize so that only changed regions get mapped
 		
-			// Map new data
-			if (hogl_vao_buffer_data(m_vao, VERTICE_VBO_ID, 0, m_vertices.data(), m_vertices.size() * sizeof(float)) != HOGL_ERROR_NONE) {
+			// We need to resize the vbo
+			if (hogl_vbo_data(m_vbo, m_vertices.data(), m_vertices.size() * sizeof(float), 0) != HOGL_ERROR_NONE) {
 				return;
 			}
-		
-			if (hogl_vao_buffer_data(m_vao, INDICE_VBO_ID, 0, m_indices.data(), m_indices.size() * sizeof(unsigned int)) != HOGL_ERROR_NONE) {
+
+			if (hogl_vbo_data(m_ebo, m_indices.data(), m_indices.size() * sizeof(unsigned int), 0) != HOGL_ERROR_NONE) {
 				return;
 			}
 		}

@@ -37,6 +37,8 @@ namespace hogl_ui {
 		void render();
 	private:
 		hogl_vao* m_vao = nullptr;
+		hogl_vbo* m_vbo = nullptr;
+		hogl_vbo* m_ebo = nullptr;
 		hogl_shader* m_shader = nullptr;
 
 		std::vector<float> m_vertices = {};

@@ -1,5 +1,6 @@
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/application.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/element.obj
+C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/input.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/transform.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/ui_parser.obj
 C:/dev/hogl/hogl_ui/hogl_ui.dir/RelWithDebInfo/vertex_list.obj

@@ -5,24 +5,24 @@
 
 typedef struct _prefilter_data
 {
-	float roughness;
+    float roughness;
 } prefilter_data;
 
 typedef struct _pbr_data
 {
-	float model[16];
+    float model[16];
 
-	// UBO requires alignment multiple of 16
-	float lightPosition[4][4];
-	float lightColor[4][4];
+    // UBO requires alignment multiple of 16
+    float lightPosition[4][4];
+    float lightColor[4][4];
 
-	float camPos[4];
+    float camPos[4];
 } pbr_data;
 
 typedef struct _matrices_data
 {
-	float projection[16];
-	float view[16];
+    float projection[16];
+    float view[16];
 } matrices_data;
 
 typedef struct _vec3 {
@@ -57,14 +57,8 @@ pbr_data pbrd;
 matrices_data md;
 
 hogl_vao* cubeMesh;
-hogl_vbo* cubeVBO;
-
 hogl_vao* quadMesh;
-hogl_vbo* quadVBO;
-
 hogl_vao* sphereMesh;
-hogl_vbo* sphereEBO;
-hogl_vbo* sphereVBO;
 
 hogl_ubo* pbrDataUBO;
 hogl_ubo* matricesUBO;
@@ -91,31 +85,31 @@ hogl_texture* ironNormalMap;
 hogl_texture* ironMetallicMap;
 hogl_texture* ironRoughnessMap;
 hogl_texture* ironAOMap;
-            
+
 hogl_texture* goldAlbedoMap;
 hogl_texture* goldNormalMap;
 hogl_texture* goldMetallicMap;
 hogl_texture* goldRoughnessMap;
 hogl_texture* goldAOMap;
-            
+
 hogl_texture* grassAlbedoMap;
 hogl_texture* grassNormalMap;
 hogl_texture* grassMetallicMap;
 hogl_texture* grassRoughnessMap;
 hogl_texture* grassAOMap;
-            
+
 hogl_texture* plasticAlbedoMap;
 hogl_texture* plasticNormalMap;
 hogl_texture* plasticMetallicMap;
 hogl_texture* plasticRoughnessMap;
 hogl_texture* plasticAOMap;
-            
+
 hogl_texture* wallAlbedoMap;
 hogl_texture* wallNormalMap;
 hogl_texture* wallMetallicMap;
 hogl_texture* wallRoughnessMap;
 hogl_texture* wallAOMap;
-            
+
 hogl_texture* hdr;
 
 hogl_texture* envCubemap;
@@ -244,23 +238,23 @@ void generate_basic_geometry(void) {
     float* sphere_vertices = NULL;
     unsigned int* sphere_indices = NULL;
 
-	hogl_vbo_desc descs[2];
+    hogl_vbo_desc descs[2];
     hogl_ap_desc apdescs[3];
 
-	// Cube
+    // Cube
     descs[0].data = cube_vertices;
     descs[0].data_size = sizeof(cube_vertices);
     descs[0].type = HOGL_VBOT_ARRAY_BUFFER;
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 3;
-    descs[0].stride = 8 * sizeof(float);
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
+    apdescs[0].stride = 8 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -268,6 +262,7 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
+    apdescs[1].stride = 8 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
     apdescs[2].divisor = 0;
@@ -275,14 +270,11 @@ void generate_basic_geometry(void) {
     apdescs[2].index = 2;
     apdescs[2].normalized = false;
     apdescs[2].offset = 6 * sizeof(float);
+    apdescs[2].stride = 8 * sizeof(float);
     apdescs[2].type = HOGL_ET_FLOAT;
 
-    hogl_vbo_new(&cubeVBO, descs[0]);
-	hogl_vao_new(&cubeMesh);
-
-    // Link VAO and VBO
-    hogl_vao_bind(cubeMesh);
-    hogl_vbo_bind(cubeVBO);
+    hogl_vao_new(&cubeMesh);
+    hogl_vao_alloc_buffers(cubeMesh, descs, 1);
 
     // Quad
     descs[0].data = quad_vertices;
@@ -291,13 +283,13 @@ void generate_basic_geometry(void) {
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 2;
-    descs[0].stride = 5 * sizeof(float);
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
+    apdescs[0].stride = 5 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -305,14 +297,11 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
+    apdescs[1].stride = 5 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
-    hogl_vbo_new(&quadVBO, descs[0]);
     hogl_vao_new(&quadMesh);
-
-    // Link VAO and VBO
-    hogl_vao_bind(quadMesh);
-    hogl_vbo_bind(quadVBO);
+    hogl_vao_alloc_buffers(quadMesh, descs, 1);
 
 
     // Sphere
@@ -325,21 +314,20 @@ void generate_basic_geometry(void) {
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 3;
-    descs[0].stride = 8 * sizeof(float);
 
     descs[1].data = sphere_indices;
     descs[1].data_size = 2 * Y_SEGMENTS * (X_SEGMENTS + 1) * sizeof(unsigned int);
     descs[1].type = HOGL_VBOT_ELEMENT_BUFFER;
     descs[1].usage = HOGL_VBOU_STATIC;
-    descs[1].ap_desc = NULL;
-    descs[1].desc_size = 0;
-    descs[1].stride = sizeof(unsigned int);
+    descs[1].ap_desc = apdescs;
+    descs[1].desc_size = 3;
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
+    apdescs[0].stride = 8 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -347,6 +335,7 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
+    apdescs[1].stride = 8 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
     apdescs[2].divisor = 0;
@@ -354,16 +343,10 @@ void generate_basic_geometry(void) {
     apdescs[2].index = 2;
     apdescs[2].normalized = false;
     apdescs[2].offset = 5 * sizeof(float);
+    apdescs[2].stride = 8 * sizeof(float);
     apdescs[2].type = HOGL_ET_FLOAT;
-    
-    hogl_vbo_new(&sphereVBO, descs[0]);
-    hogl_vbo_new(&sphereEBO, descs[1]);
     hogl_vao_new(&sphereMesh);
-
-    // Link VAO and VBO
-    hogl_vao_bind(sphereMesh);
-    hogl_vbo_bind(sphereVBO);
-    hogl_vbo_bind(sphereEBO);
+    hogl_vao_alloc_buffers(sphereMesh, descs, 2);
 
     hogl_free(sphere_vertices);
     hogl_free(sphere_indices);
@@ -406,7 +389,7 @@ void load_shaders(void) {
     hogl_shader_ubo_binding(pbrShader, "matrices", 7);
 
     desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\n\nout vec3 WorldPos;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nvoid main()\n{\n    WorldPos = aPos;  \n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
-    
+
     desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec3 WorldPos;\n\nuniform sampler2D equirectangularMap;\n\nconst vec2 invAtan = vec2(0.1591, 0.3183);\nvec2 SampleSphericalMap(vec3 v)\n{\n    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));\n    uv *= invAtan;\n    uv += 0.5;\n    return uv;\n}\n\nvoid main()\n{\t\t\n    vec2 uv = SampleSphericalMap(normalize(WorldPos));\n    vec3 color = texture(equirectangularMap, uv).rgb;\n    \n    FragColor = vec4(color, 1.0);\n}\n";
     hogl_shader_new(&equirectangularToCubemapShader, desc);
     hogl_shader_bind(equirectangularToCubemapShader);
@@ -542,19 +525,19 @@ void load_textures(void) {
     //load_image(&goldMetallicMap, "res/pbr/gold/metallic.png");
     //load_image(&goldRoughnessMap, "res/pbr/gold/roughness.png");
     //load_image(&goldAOMap, "res/pbr/gold/ao.png");
-    
+
     //load_image(&grassAlbedoMap, "res/pbr/grass/albedo.png");
     //load_image(&grassNormalMap, "res/pbr/grass/normal.png");
     //load_image(&grassMetallicMap, "res/pbr/grass/metallic.png");
     //load_image(&grassRoughnessMap, "res/pbr/grass/roughness.png");
     //load_image(&grassAOMap, "res/pbr/grass/ao.png");
-    
+
     //load_image(&plasticAlbedoMap, "res/pbr/plastic/albedo.png");
     //load_image(&plasticNormalMap, "res/pbr/plastic/normal.png");
     //load_image(&plasticMetallicMap, "res/pbr/plastic/metallic.png");
     //load_image(&plasticRoughnessMap, "res/pbr/plastic/roughness.png");
     //load_image(&plasticAOMap, "res/pbr/plastic/ao.png");
-    
+
     //load_image(&wallAlbedoMap, "res/pbr/wall/albedo.png");
     //load_image(&wallNormalMap, "res/pbr/wall/normal.png");
     //load_image(&wallMetallicMap, "res/pbr/wall/metallic.png");
@@ -871,7 +854,7 @@ void prepare_pbr(void) {
 
     hogl_framebuffer_bind(fbo);
     hogl_renderbuffer_bind(rbo);
-    
+
     hogl_viewport(512, 512);
     hogl_set_depth_test(HOGL_RD_LEQUAL);
     hogl_seamless_cm(true);
@@ -896,61 +879,61 @@ void prepare_pbr(void) {
     hogl_framebuffer_bind(fbo);
     hogl_renderbuffer_resize(rbo, 32, 32);
     hogl_viewport(32, 32);
-    
+
     hogl_shader_bind(irradianceShader);
     hogl_texture_bind(envCubemap, 0);
-    
+
     for (int i = 0; i < 6; i++) {
         memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
         hogl_ubo_data(matricesUBO, &md, sizeof(md));
-    
+
         hogl_cm_active_side(irradianceMap, (hogl_cm_side)i);
         hogl_framebuffer_ca(fbo, irradianceMap, 0, 0);
-    
+
         hogl_render_clear(0, 0, 0, 0);
         hogl_render_a(HOGL_RM_TRIANGLES, 36);
     }
-    
+
     hogl_shader_bind(prefilterShader);
     hogl_texture_bind(envCubemap, 0);
-    
+
     unsigned int maxMipLevels = 5;
     for (unsigned int mip = 0; mip < maxMipLevels; ++mip) {
         unsigned int mipWidth = 128 * pow(0.5, mip);
         unsigned int mipHeight = 128 * pow(0.5, mip);
-    
+
         hogl_viewport(mipWidth, mipHeight);
         hogl_framebuffer_bind(fbo);
         hogl_renderbuffer_resize(rbo, mipWidth, mipHeight);
-    
+
         float roughness = (float)mip / (float)(maxMipLevels - 1);
         pfd.roughness = roughness;
         hogl_ubo_data(prefilterUBO, &pfd, sizeof(prefilter_data));
-    
+
         for (unsigned int i = 0; i < 6; ++i)
         {
             memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
             hogl_ubo_data(matricesUBO, &md, sizeof(md));
-    
+
             hogl_cm_active_side(prefilterMap, (hogl_cm_side)i);
             hogl_framebuffer_ca(fbo, prefilterMap, 0, mip);
-    
+
             hogl_render_clear(0, 0, 0, 0);
             hogl_render_a(HOGL_RM_TRIANGLES, 36);
         }
     }
-    
+
     hogl_framebuffer_bind(fbo);
     hogl_renderbuffer_resize(rbo, 512, 512);
     hogl_viewport(512, 512);
-    
+
     hogl_framebuffer_ca(fbo, brdfLUTTexture, 0, 0);
     hogl_framebuffer_bind(fbo);
-    
+
     hogl_shader_bind(brdfShader);
     hogl_vao_bind(quadMesh);
     hogl_set_depth_test(HOGL_RD_LEQUAL);
-    
+
     hogl_render_clear(0, 0, 0, 0);
     hogl_render_a(HOGL_RM_TRIANGLE_STRIP, 4);
 
@@ -1041,7 +1024,7 @@ void render_pbr(void) {
     look_at(eye, target, up, &view[0]);
 
     memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
-    
+
     pbrd.camPos[0] = 0.0f;
     pbrd.camPos[1] = 0.0f;
     pbrd.camPos[2] = 15.0f;
@@ -1063,7 +1046,7 @@ void render_pbr(void) {
 
     hogl_vao_bind(sphereMesh);
     hogl_shader_bind(pbrShader);
-    
+
     hogl_texture_bind(irradianceMap, 0);
     hogl_texture_bind(prefilterMap, 1);
     hogl_texture_bind(brdfLUTTexture, 2);
@@ -1072,15 +1055,15 @@ void render_pbr(void) {
     hogl_texture_bind(ironMetallicMap, 5);
     hogl_texture_bind(ironRoughnessMap, 6);
     hogl_texture_bind(ironAOMap, 7);
-    
+
     hogl_render_e(HOGL_RM_TRIANGLE_STRIP, 2 * Y_SEGMENTS * (X_SEGMENTS + 1));
-    
+
     memcpy(&model[0], &identity[0], 16 * sizeof(float));
 
     // Skybox
     memcpy(&md.view[0], &view[0], sizeof(float) * 16);
     hogl_ubo_data(matricesUBO, &md, sizeof(matrices_data));
-   
+
     hogl_vao_bind(cubeMesh);
     hogl_shader_bind(backgroundShader);
     hogl_texture_bind(envCubemap, 0);
@@ -1121,19 +1104,19 @@ void pbr_free(void) {
     //hogl_texture_free(goldMetallicMap);
     //hogl_texture_free(goldRoughnessMap);
     //hogl_texture_free(goldAOMap);
-    
+
     //hogl_texture_free(grassAlbedoMap);
     //hogl_texture_free(grassNormalMap);
     //hogl_texture_free(grassMetallicMap);
     //hogl_texture_free(grassRoughnessMap);
     //hogl_texture_free(grassAOMap);
-    
+
     //hogl_texture_free(plasticAlbedoMap);
     //hogl_texture_free(plasticNormalMap);
     //hogl_texture_free(plasticMetallicMap);
     //hogl_texture_free(plasticRoughnessMap);
     //hogl_texture_free(plasticAOMap);
-    
+
     //hogl_texture_free(wallAlbedoMap);
     //hogl_texture_free(wallNormalMap);
     //hogl_texture_free(wallMetallicMap);
@@ -1149,9 +1132,4 @@ void pbr_free(void) {
 
     hogl_source_free(audioSource);
     hogl_abuffer_free(audioBuffer);
-
-    hogl_vbo_free(cubeVBO);
-    hogl_vbo_free(quadVBO);
-    hogl_vbo_free(sphereVBO);
-    hogl_vbo_free(sphereEBO);
 }

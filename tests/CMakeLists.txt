@@ -13,7 +13,8 @@ set_property(TARGET tests PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY
 # Includes
 target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/hogl_core/src/)
 target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/hogl_ui/src/)
-target_link_libraries(tests PRIVATE hogl_core PRIVATE hogl_ui)
+target_include_directories(tests PUBLIC ${PROJECT_SOURCE_DIR}/hogl/src/)
+target_link_libraries(tests PRIVATE hogl_core PRIVATE hogl_ui PRIVATE hogl)
 
 # Some MSVC flags
 set_property(TARGET tests PROPERTY
