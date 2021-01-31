@@ -10,3 +10,6 @@
 	#define HOGL_CPP_API
 #endif
 
+namespace hogl {
+	constexpr size_t MAX_TEXTURE_UNITS = 16;
+}

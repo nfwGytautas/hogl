@@ -5,8 +5,8 @@
 #include <sstream>
 
 #include "hogl_core/hogl_core.h"
-//#include "pbr_cpp.h"
-#include "pbr.h"
+#include "pbr_cpp.h"
+//#include "pbr.h"
 #include "ui.h"
 
 void pbr(void) {
@@ -91,8 +91,8 @@ void pbr_cpp(void) {
 
 int main(int argc, char** argv) {
 	//ui();
-	pbr();
-	//pbr_cpp();
+	//pbr();
+	pbr_cpp();
 
 	return 0;
 }

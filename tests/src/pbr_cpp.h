@@ -1,3 +1,9 @@
+#include "hogl/entity/mesh.hpp"
+#include "hogl/entity/material.hpp"
+#include "hogl/core/object_storage.hpp"
+#include "hogl/core/framebuffer.hpp"
+#include "hogl/io/asset_manager.hpp"
+
 #include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -52,26 +58,27 @@ const unsigned int X_SEGMENTS = 64;
 const unsigned int Y_SEGMENTS = 64;
 const float PI = 3.14159265359;
 
+hogl::object_storage* storage = nullptr;
+
 prefilter_data pfd;
 pbr_data pbrd;
 matrices_data md;
 
-hogl_vao* cubeMesh;
-hogl_vao* quadMesh;
-hogl_vao* sphereMesh;
+hogl::relay_ptr<hogl::mesh> cubeMesh;
+hogl::relay_ptr<hogl::mesh> quadMesh;
+hogl::relay_ptr<hogl::mesh> sphereMesh;
 
 hogl_ubo* pbrDataUBO;
 hogl_ubo* matricesUBO;
 hogl_ubo* prefilterUBO;
 
-hogl_shader* pbrShader;
 hogl_shader* equirectangularToCubemapShader;
 hogl_shader* irradianceShader;
 hogl_shader* prefilterShader;
 hogl_shader* brdfShader;
 hogl_shader* backgroundShader;
 
-hogl_framebuffer* fbo;
+hogl::relay_ptr<hogl::framebuffer> fbo;
 hogl_renderbuffer* rbo;
 
 // Albedo       slot 3
@@ -80,11 +87,7 @@ hogl_renderbuffer* rbo;
 // Roughness    slot 6
 // AO           slot 7
 
-hogl_texture* ironAlbedoMap;
-hogl_texture* ironNormalMap;
-hogl_texture* ironMetallicMap;
-hogl_texture* ironRoughnessMap;
-hogl_texture* ironAOMap;
+hogl::relay_ptr<hogl::material> iron;
 
 hogl_texture* goldAlbedoMap;
 hogl_texture* goldNormalMap;
@@ -112,10 +115,10 @@ hogl_texture* wallAOMap;
 
 hogl_texture* hdr;
 
-hogl_texture* envCubemap;
-hogl_texture* irradianceMap;
-hogl_texture* prefilterMap;
-hogl_texture* brdfLUTTexture;
+hogl::ref<hogl::texture> brdfLUTTexture;
+hogl::ref<hogl::cubemap> irradianceMap;
+hogl::ref<hogl::cubemap> prefilterMap;
+hogl::ref<hogl::cubemap> envCubemap;
 
 hogl_asource* audioSource;
 hogl_abuffer* audioBuffer;
@@ -248,13 +251,13 @@ void generate_basic_geometry(void) {
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 3;
+    descs[0].stride = 8 * sizeof(float);
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
-    apdescs[0].stride = 8 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -262,7 +265,6 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
-    apdescs[1].stride = 8 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
     apdescs[2].divisor = 0;
@@ -270,11 +272,10 @@ void generate_basic_geometry(void) {
     apdescs[2].index = 2;
     apdescs[2].normalized = false;
     apdescs[2].offset = 6 * sizeof(float);
-    apdescs[2].stride = 8 * sizeof(float);
     apdescs[2].type = HOGL_ET_FLOAT;
 
-    hogl_vao_new(&cubeMesh);
-    hogl_vao_alloc_buffers(cubeMesh, descs, 1);
+    cubeMesh = storage->create_new<hogl::mesh>().relay();
+    cubeMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
 
     // Quad
     descs[0].data = quad_vertices;
@@ -283,13 +284,13 @@ void generate_basic_geometry(void) {
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 2;
+    descs[0].stride = 5 * sizeof(float);
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
-    apdescs[0].stride = 5 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -297,12 +298,10 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
-    apdescs[1].stride = 5 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
-    hogl_vao_new(&quadMesh);
-    hogl_vao_alloc_buffers(quadMesh, descs, 1);
-
+    quadMesh = storage->create_new<hogl::mesh>().relay();
+    quadMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
 
     // Sphere
     sphere_vertices = generate_sphere_vertices();
@@ -314,20 +313,21 @@ void generate_basic_geometry(void) {
     descs[0].usage = HOGL_VBOU_STATIC;
     descs[0].ap_desc = apdescs;
     descs[0].desc_size = 3;
+    descs[0].stride = 8 * sizeof(float);
 
     descs[1].data = sphere_indices;
     descs[1].data_size = 2 * Y_SEGMENTS * (X_SEGMENTS + 1) * sizeof(unsigned int);
     descs[1].type = HOGL_VBOT_ELEMENT_BUFFER;
     descs[1].usage = HOGL_VBOU_STATIC;
-    descs[1].ap_desc = apdescs;
-    descs[1].desc_size = 3;
+    descs[1].ap_desc = NULL;
+    descs[1].desc_size = 0;
+    descs[1].stride = sizeof(unsigned int);
 
     apdescs[0].divisor = 0;
     apdescs[0].ecount = 3;
     apdescs[0].index = 0;
     apdescs[0].normalized = false;
     apdescs[0].offset = 0;
-    apdescs[0].stride = 8 * sizeof(float);
     apdescs[0].type = HOGL_ET_FLOAT;
 
     apdescs[1].divisor = 0;
@@ -335,7 +335,6 @@ void generate_basic_geometry(void) {
     apdescs[1].index = 1;
     apdescs[1].normalized = false;
     apdescs[1].offset = 3 * sizeof(float);
-    apdescs[1].stride = 8 * sizeof(float);
     apdescs[1].type = HOGL_ET_FLOAT;
 
     apdescs[2].divisor = 0;
@@ -343,10 +342,11 @@ void generate_basic_geometry(void) {
     apdescs[2].index = 2;
     apdescs[2].normalized = false;
     apdescs[2].offset = 5 * sizeof(float);
-    apdescs[2].stride = 8 * sizeof(float);
     apdescs[2].type = HOGL_ET_FLOAT;
-    hogl_vao_new(&sphereMesh);
-    hogl_vao_alloc_buffers(sphereMesh, descs, 2);
+
+    sphereMesh = storage->create_new<hogl::mesh>().relay();
+    sphereMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
+    sphereMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[1]));
 
     hogl_free(sphere_vertices);
     hogl_free(sphere_indices);
@@ -375,18 +375,20 @@ void load_shaders(void) {
     //desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\nlayout (location = 2) in vec2 aTexCoords;\nlayout (location = 1) in vec3 aNormal;\n\nout vec2 TexCoords;\nout vec3 WorldPos;\nout vec3 Normal;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nvoid main()\n{\n    TexCoords = aTexCoords;\n    WorldPos = vec3(model * vec4(aPos, 1.0));\n    Normal = mat3(model) * aNormal;   \n\n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
     desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\nlayout (location = 1) in vec2 aTexCoords;\nlayout (location = 2) in vec3 aNormal;\n\nout vec2 TexCoords;\nout vec3 WorldPos;\nout vec3 Normal;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nvoid main()\n{\n    TexCoords = aTexCoords;\n    WorldPos = vec3(model * vec4(aPos, 1.0));\n    Normal = mat3(model) * aNormal;   \n\n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
     desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec2 TexCoords;\nin vec3 WorldPos;\nin vec3 Normal;\n\n// IBL\nuniform samplerCube irradianceMap;\nuniform samplerCube prefilterMap;\nuniform sampler2D brdfLUT;\n\n// material parameters\nuniform sampler2D albedoMap;\nuniform sampler2D normalMap;\nuniform sampler2D metallicMap;\nuniform sampler2D roughnessMap;\nuniform sampler2D aoMap;\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nconst float PI = 3.14159265359;\n// ----------------------------------------------------------------------------\n// Easy trick to get tangent-normals to world-space to keep PBR code simplified.\n// Don't worry if you don't get what's going on; you generally want to do normal \n// mapping the usual way for performance anways; I do plan make a note of this \n// technique somewhere later in the normal mapping tutorial.\nvec3 getNormalFromMap()\n{\n    vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;\n\n    vec3 Q1  = dFdx(WorldPos);\n    vec3 Q2  = dFdy(WorldPos);\n    vec2 st1 = dFdx(TexCoords);\n    vec2 st2 = dFdy(TexCoords);\n\n    vec3 N   = normalize(Normal);\n    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);\n    vec3 B  = -normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    return normalize(TBN * tangentNormal);\n}\n// ----------------------------------------------------------------------------\nfloat DistributionGGX(vec3 N, vec3 H, float roughness)\n{\n    float a = roughness*roughness;\n    float a2 = a*a;\n    float NdotH = max(dot(N, H), 0.0);\n    float NdotH2 = NdotH*NdotH;\n\n    float nom   = a2;\n    float denom = (NdotH2 * (a2 - 1.0) + 1.0);\n    denom = PI * denom * denom;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySchlickGGX(float NdotV, float roughness)\n{\n    float r = (roughness + 1.0);\n    float k = (r*r) / 8.0;\n\n    float nom   = NdotV;\n    float denom = NdotV * (1.0 - k) + k;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)\n{\n    float NdotV = max(dot(N, V), 0.0);\n    float NdotL = max(dot(N, L), 0.0);\n    float ggx2 = GeometrySchlickGGX(NdotV, roughness);\n    float ggx1 = GeometrySchlickGGX(NdotL, roughness);\n\n    return ggx1 * ggx2;\n}\n// ----------------------------------------------------------------------------\nvec3 fresnelSchlick(float cosTheta, vec3 F0)\n{\n    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);\n}\n// ----------------------------------------------------------------------------\nvec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)\n{\n    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);\n}   \n// ----------------------------------------------------------------------------\nvoid main()\n{\t\t\n    // material properties\n    vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));\n    float metallic = texture(metallicMap, TexCoords).r;\n    float roughness = texture(roughnessMap, TexCoords).r;\n    float ao = texture(aoMap, TexCoords).r;\n       \n    // input lighting data\n    vec3 N = getNormalFromMap();\n    vec3 V = normalize(camPos.xyz - WorldPos);\n    vec3 R = reflect(-V, N); \n\n    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 \n    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    \n    vec3 F0 = vec3(0.04); \n    F0 = mix(F0, albedo, metallic);\n\n    // reflectance equation\n    vec3 Lo = vec3(0.0);\n    for(int i = 0; i < 4; ++i) \n    {\n        // calculate per-light radiance\n        vec3 L = normalize(lightPositions[i].xyz - WorldPos);\n        vec3 H = normalize(V + L);\n        float distance = length(lightPositions[i].xyz - WorldPos);\n        float attenuation = 1.0 / (distance * distance);\n        vec3 radiance = lightColors[i].xyz * attenuation;\n\n        // Cook-Torrance BRDF\n        float NDF = DistributionGGX(N, H, roughness);   \n        float G   = GeometrySmith(N, V, L, roughness);    \n        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);        \n        \n        vec3 nominator    = NDF * G * F;\n        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.\n        vec3 specular = nominator / denominator;\n        \n         // kS is equal to Fresnel\n        vec3 kS = F;\n        // for energy conservation, the diffuse and specular light can't\n        // be above 1.0 (unless the surface emits light); to preserve this\n        // relationship the diffuse component (kD) should equal 1.0 - kS.\n        vec3 kD = vec3(1.0) - kS;\n        // multiply kD by the inverse metalness such that only non-metals \n        // have diffuse lighting, or a linear blend if partly metal (pure metals\n        // have no diffuse light).\n        kD *= 1.0 - metallic;\t                \n            \n        // scale light by NdotL\n        float NdotL = max(dot(N, L), 0.0);        \n\n        // add to outgoing radiance Lo\n        Lo += (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again\n    }   \n    \n    // ambient lighting (we now use IBL as the ambient term)\n    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);\n    \n    vec3 kS = F;\n    vec3 kD = 1.0 - kS;\n    kD *= 1.0 - metallic;\t  \n    \n    vec3 irradiance = texture(irradianceMap, N).rgb;\n    vec3 diffuse      = irradiance * albedo;\n    \n    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.\n    const float MAX_REFLECTION_LOD = 4.0;\n    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    \n    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;\n    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);\n\n    vec3 ambient = (kD * diffuse + specular) * ao;\n    \n    vec3 color = ambient + Lo;\n\n    // HDR tonemapping\n    color = color / (color + vec3(1.0));\n    // gamma correct\n    color = pow(color, vec3(1.0/2.2)); \n\n    FragColor = vec4(color , 1.0);\n}\n";
-    hogl_shader_new(&pbrShader, desc);
-    hogl_shader_bind(pbrShader);
-    hogl_shader_sampler_location(pbrShader, "irradianceMap", 0);
-    hogl_shader_sampler_location(pbrShader, "prefilterMap", 1);
-    hogl_shader_sampler_location(pbrShader, "brdfLUT", 2);
-    hogl_shader_sampler_location(pbrShader, "albedoMap", 3);
-    hogl_shader_sampler_location(pbrShader, "normalMap", 4);
-    hogl_shader_sampler_location(pbrShader, "metallicMap", 5);
-    hogl_shader_sampler_location(pbrShader, "roughnessMap", 6);
-    hogl_shader_sampler_location(pbrShader, "aoMap", 7);
-    hogl_shader_ubo_binding(pbrShader, "pbr_data", 5);
-    hogl_shader_ubo_binding(pbrShader, "matrices", 7);
+    
+    hogl::ref<hogl::shader> pbrShader = storage->create_new<hogl::shader>(desc);
+    pbrShader->bind();
+
+    pbrShader->sampler_location("irradianceMap", 0);
+    pbrShader->sampler_location("prefilterMap", 1);
+    pbrShader->sampler_location("brdfLUT", 2);
+    pbrShader->sampler_location("albedoMap", 3);
+    pbrShader->sampler_location("normalMap", 4);
+    pbrShader->sampler_location("metallicMap", 5);
+    pbrShader->sampler_location("roughnessMap", 6);
+    pbrShader->sampler_location("aoMap", 7);
+    pbrShader->ubo_location("pbr_data", 5);
+    pbrShader->ubo_location("matrices", 7);
 
     desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\n\nout vec3 WorldPos;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nvoid main()\n{\n    WorldPos = aPos;  \n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
 
@@ -418,9 +420,11 @@ void load_shaders(void) {
     hogl_shader_bind(backgroundShader);
     hogl_shader_sampler_location(backgroundShader, "environmentMap", 0);
     hogl_shader_ubo_binding(backgroundShader, "matrices", 7);
+
+    iron->set_shader(pbrShader);
 }
 
-void load_image(hogl_texture** texture, const char* file) {
+hogl::ref<hogl::texture> load_image(const char* file) {
     hogl_texture_desc desc;
     hogl_texture_data data;
     int components;
@@ -456,11 +460,13 @@ void load_image(hogl_texture** texture, const char* file) {
 
     data.etype = HOGL_ET_UBYTE;
 
-    hogl_texture_new(texture, desc);
-    hogl_set_texture_data(*texture, &data);
-    hogl_texture_gen_mipmap(*texture);
+    hogl::ref<hogl::texture> texture = storage->create_new<hogl::texture>(desc);
+    texture->set_data(data);
+    texture->gen_mipmap();
 
     stbi_image_free(data.data);
+
+    return texture;
 }
 
 void load_hdr(hogl_texture** texture, const char* file) {
@@ -514,11 +520,11 @@ void load_textures(void) {
     //load_image(&ironRoughnessMap, "res/pbr/rusted_iron/roughness.png");
     //load_image(&ironAOMap, "res/pbr/rusted_iron/ao.png");
 
-    load_image(&ironAlbedoMap, "res/pbr/gold/albedo.png");
-    load_image(&ironNormalMap, "res/pbr/gold/normal.png");
-    load_image(&ironMetallicMap, "res/pbr/gold/metallic.png");
-    load_image(&ironRoughnessMap, "res/pbr/gold/roughness.png");
-    load_image(&ironAOMap, "res/pbr/gold/ao.png");
+    iron->set_texture(load_image("res/pbr/gold/albedo.png"), 3);
+    iron->set_texture(load_image("res/pbr/gold/normal.png"), 4);
+    iron->set_texture(load_image("res/pbr/gold/metallic.png"), 5);
+    iron->set_texture(load_image("res/pbr/gold/roughness.png"), 6);
+    iron->set_texture(load_image("res/pbr/gold/ao.png"), 7);
 
     //load_image(&goldAlbedoMap, "res/pbr/gold/albedo.png");
     //load_image(&goldNormalMap, "res/pbr/gold/normal.png");
@@ -562,11 +568,11 @@ void load_textures(void) {
     data.data_format = HOGL_TF_RGB16F;
     data.display_format = HOGL_TF_RGB;
 
-    hogl_cm_new(&envCubemap, desc);
+    envCubemap = storage->create_new<hogl::cubemap>(desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(envCubemap, (hogl_cm_side)i);
-        hogl_set_texture_data(envCubemap, &data);
+        envCubemap->set_side((hogl_cm_side)i);
+        envCubemap->set_data(data);
     }
 
     desc.min_filter = HOGL_FT_LINEAR;
@@ -574,11 +580,11 @@ void load_textures(void) {
     data.height = 32;
     data.width = 32;
 
-    hogl_cm_new(&irradianceMap, desc);
+    irradianceMap = storage->create_new<hogl::cubemap>(desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(irradianceMap, (hogl_cm_side)i);
-        hogl_set_texture_data(irradianceMap, &data);
+        irradianceMap->set_side((hogl_cm_side)i);
+        irradianceMap->set_data(data);
     }
 
     desc.min_filter = HOGL_FT_LINEAR_MIPMAP_LINEAR;
@@ -586,14 +592,14 @@ void load_textures(void) {
     data.height = 128;
     data.width = 128;
 
-    hogl_cm_new(&prefilterMap, desc);
+    prefilterMap = storage->create_new<hogl::cubemap>(desc);
 
     for (int i = 0; i < 6; i++) {
-        hogl_cm_active_side(prefilterMap, (hogl_cm_side)i);
-        hogl_set_texture_data(prefilterMap, &data);
+        prefilterMap->set_side((hogl_cm_side)i);
+        prefilterMap->set_data(data);
     }
 
-    hogl_texture_gen_mipmap(prefilterMap);
+    prefilterMap->gen_mipmap();
 
     desc.min_filter = HOGL_FT_LINEAR;
 
@@ -603,8 +609,8 @@ void load_textures(void) {
     data.display_format = HOGL_TF_RG;
     data.data_format = HOGL_TF_RG16F;
 
-    hogl_texture_new(&brdfLUTTexture, desc);
-    hogl_set_texture_data(brdfLUTTexture, &data);
+    brdfLUTTexture = storage->create_new<hogl::texture>(desc);
+    brdfLUTTexture->set_data(data);
 }
 
 void setup_fbos(void) {
@@ -619,7 +625,7 @@ void setup_fbos(void) {
     desc.render_attachments = &rbo;
     desc.ra_size = 1;
 
-    hogl_framebuffer_new(&fbo, desc);
+    fbo = storage->create_new<hogl::framebuffer>(desc).relay();
 }
 
 void setup_ubos(void) {
@@ -789,6 +795,9 @@ void load_audio(hogl_abuffer_desc* desc) {
 }
 
 void prepare_pbr(void) {
+    storage = new hogl::object_storage();
+    iron = storage->create_new<hogl::material>().relay();
+
     float views[6][16];
     hogl_rstate rstate;
     vec3 eye = { 0 };
@@ -852,7 +861,7 @@ void prepare_pbr(void) {
     target.z = -1.0f;
     look_at(eye, target, up, &views[5][0]);
 
-    hogl_framebuffer_bind(fbo);
+    fbo->bind();
     hogl_renderbuffer_bind(rbo);
 
     hogl_viewport(512, 512);
@@ -861,41 +870,41 @@ void prepare_pbr(void) {
 
     hogl_shader_bind(equirectangularToCubemapShader);
     hogl_texture_bind(hdr, 0);
-    hogl_vao_bind(cubeMesh);
+    cubeMesh->bind();
 
     for (int i = 0; i < 6; i++) {
         memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
         hogl_ubo_data(matricesUBO, &md, sizeof(md));
 
-        hogl_cm_active_side(envCubemap, (hogl_cm_side)i);
-        hogl_framebuffer_ca(fbo, envCubemap, 0, 0);
+        envCubemap->set_side((hogl_cm_side)i);
+        fbo->ca(envCubemap.relay_as<hogl::texture>(), 0, 0);
 
         hogl_render_clear(0.5f, 0, 0, 0);
         hogl_render_a(HOGL_RM_TRIANGLES, 36);
     }
 
-    hogl_texture_gen_mipmap(envCubemap);
+    envCubemap->gen_mipmap();
 
-    hogl_framebuffer_bind(fbo);
+    fbo->bind();
     hogl_renderbuffer_resize(rbo, 32, 32);
     hogl_viewport(32, 32);
 
     hogl_shader_bind(irradianceShader);
-    hogl_texture_bind(envCubemap, 0);
+    envCubemap->bind(0);
 
     for (int i = 0; i < 6; i++) {
         memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
         hogl_ubo_data(matricesUBO, &md, sizeof(md));
 
-        hogl_cm_active_side(irradianceMap, (hogl_cm_side)i);
-        hogl_framebuffer_ca(fbo, irradianceMap, 0, 0);
+        irradianceMap->set_side((hogl_cm_side)i);
+        fbo->ca(irradianceMap.relay_as<hogl::texture>(), 0, 0);
 
         hogl_render_clear(0, 0, 0, 0);
         hogl_render_a(HOGL_RM_TRIANGLES, 36);
     }
 
     hogl_shader_bind(prefilterShader);
-    hogl_texture_bind(envCubemap, 0);
+    envCubemap->bind(0);
 
     unsigned int maxMipLevels = 5;
     for (unsigned int mip = 0; mip < maxMipLevels; ++mip) {
@@ -903,7 +912,7 @@ void prepare_pbr(void) {
         unsigned int mipHeight = 128 * pow(0.5, mip);
 
         hogl_viewport(mipWidth, mipHeight);
-        hogl_framebuffer_bind(fbo);
+        fbo->bind();
         hogl_renderbuffer_resize(rbo, mipWidth, mipHeight);
 
         float roughness = (float)mip / (float)(maxMipLevels - 1);
@@ -915,27 +924,28 @@ void prepare_pbr(void) {
             memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
             hogl_ubo_data(matricesUBO, &md, sizeof(md));
 
-            hogl_cm_active_side(prefilterMap, (hogl_cm_side)i);
-            hogl_framebuffer_ca(fbo, prefilterMap, 0, mip);
+            prefilterMap->set_side((hogl_cm_side)i);
+            fbo->ca(prefilterMap.relay_as<hogl::texture>(), 0, mip);
 
             hogl_render_clear(0, 0, 0, 0);
             hogl_render_a(HOGL_RM_TRIANGLES, 36);
         }
     }
 
-    hogl_framebuffer_bind(fbo);
+    fbo->bind();
     hogl_renderbuffer_resize(rbo, 512, 512);
     hogl_viewport(512, 512);
 
-    hogl_framebuffer_ca(fbo, brdfLUTTexture, 0, 0);
-    hogl_framebuffer_bind(fbo);
+    fbo->ca(brdfLUTTexture.relay(), 0, 0);
+    fbo->bind();
 
     hogl_shader_bind(brdfShader);
-    hogl_vao_bind(quadMesh);
+    quadMesh->bind();
     hogl_set_depth_test(HOGL_RD_LEQUAL);
 
     hogl_render_clear(0, 0, 0, 0);
-    hogl_render_a(HOGL_RM_TRIANGLE_STRIP, 4);
+    //hogl_render_a(HOGL_RM_TRIANGLE_STRIP, 4);
+    quadMesh->render(HOGL_RM_TRIANGLE_STRIP);
 
     perspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f, &md.projection[0]);
 
@@ -962,6 +972,10 @@ void prepare_pbr(void) {
     hogl_source_buffer(audioSource, audioBuffer);
     hogl_source_play(audioSource);
     hogl_free(adesc.data);
+
+    iron->set_texture(irradianceMap.as<hogl::texture>(), 0);
+    iron->set_texture(prefilterMap.as<hogl::texture>(), 1);
+    iron->set_texture(brdfLUTTexture, 2);
 }
 
 void render_pbr(void) {
@@ -1044,19 +1058,10 @@ void render_pbr(void) {
     memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
     hogl_ubo_data(pbrDataUBO, &pbrd, sizeof(pbr_data));
 
-    hogl_vao_bind(sphereMesh);
-    hogl_shader_bind(pbrShader);
+    sphereMesh->bind();
+    iron->bind();
 
-    hogl_texture_bind(irradianceMap, 0);
-    hogl_texture_bind(prefilterMap, 1);
-    hogl_texture_bind(brdfLUTTexture, 2);
-    hogl_texture_bind(ironAlbedoMap, 3);
-    hogl_texture_bind(ironNormalMap, 4);
-    hogl_texture_bind(ironMetallicMap, 5);
-    hogl_texture_bind(ironRoughnessMap, 6);
-    hogl_texture_bind(ironAOMap, 7);
-
-    hogl_render_e(HOGL_RM_TRIANGLE_STRIP, 2 * Y_SEGMENTS * (X_SEGMENTS + 1));
+    sphereMesh->render(HOGL_RM_TRIANGLE_STRIP);
 
     memcpy(&model[0], &identity[0], 16 * sizeof(float));
 
@@ -1064,10 +1069,10 @@ void render_pbr(void) {
     memcpy(&md.view[0], &view[0], sizeof(float) * 16);
     hogl_ubo_data(matricesUBO, &md, sizeof(matrices_data));
 
-    hogl_vao_bind(cubeMesh);
+    cubeMesh->bind();
     hogl_shader_bind(backgroundShader);
-    hogl_texture_bind(envCubemap, 0);
-    hogl_render_a(HOGL_RM_TRIANGLES, 36);
+    envCubemap->bind(0);
+    cubeMesh->render(HOGL_RM_TRIANGLES);
 
     //hogl_source_position(audioSource, 0.0f, audio_y, 0.0f);
     hogl_listener_position(0.0f, audio_y, 0.0f);
@@ -1075,61 +1080,22 @@ void render_pbr(void) {
 }
 
 void pbr_free(void) {
-    hogl_vao_free(cubeMesh);
-    hogl_vao_free(quadMesh);
-    hogl_vao_free(sphereMesh);
-
     hogl_ubo_free(pbrDataUBO);
     hogl_ubo_free(matricesUBO);
     hogl_ubo_free(prefilterUBO);
 
-    hogl_shader_free(pbrShader);
     hogl_shader_free(equirectangularToCubemapShader);
     hogl_shader_free(irradianceShader);
     hogl_shader_free(prefilterShader);
     hogl_shader_free(brdfShader);
     hogl_shader_free(backgroundShader);
 
-    hogl_framebuffer_free(fbo);
     hogl_renderbuffer_free(rbo);
-
-    hogl_texture_free(ironAlbedoMap);
-    hogl_texture_free(ironNormalMap);
-    hogl_texture_free(ironMetallicMap);
-    hogl_texture_free(ironRoughnessMap);
-    hogl_texture_free(ironAOMap);
-
-    //hogl_texture_free(goldAlbedoMap);
-    //hogl_texture_free(goldNormalMap);
-    //hogl_texture_free(goldMetallicMap);
-    //hogl_texture_free(goldRoughnessMap);
-    //hogl_texture_free(goldAOMap);
-
-    //hogl_texture_free(grassAlbedoMap);
-    //hogl_texture_free(grassNormalMap);
-    //hogl_texture_free(grassMetallicMap);
-    //hogl_texture_free(grassRoughnessMap);
-    //hogl_texture_free(grassAOMap);
-
-    //hogl_texture_free(plasticAlbedoMap);
-    //hogl_texture_free(plasticNormalMap);
-    //hogl_texture_free(plasticMetallicMap);
-    //hogl_texture_free(plasticRoughnessMap);
-    //hogl_texture_free(plasticAOMap);
-
-    //hogl_texture_free(wallAlbedoMap);
-    //hogl_texture_free(wallNormalMap);
-    //hogl_texture_free(wallMetallicMap);
-    //hogl_texture_free(wallRoughnessMap);
-    //hogl_texture_free(wallAOMap);
 
     hogl_texture_free(hdr);
 
-    hogl_texture_free(envCubemap);
-    hogl_texture_free(irradianceMap);
-    hogl_texture_free(prefilterMap);
-    hogl_texture_free(brdfLUTTexture);
-
     hogl_source_free(audioSource);
     hogl_abuffer_free(audioBuffer);
+
+    delete storage;
 }

@@ -532,10 +532,12 @@ hogl_error hogl_shader_ubo_binding(hogl_shader* shader, const char* ubo_name, un
 	int index = glGetUniformBlockIndex(shader->id, ubo_name);
 	hogl_gl_check();
 
+#ifndef HOGL_DISABLE_GL_WARNING
 	if (index == -1 || index == GL_INVALID_INDEX) {
 		hogl_log_warn("Trying to bind UBO %s to non existing bind point %ld", ubo_name, bp);
 		return HOGL_ERROR_UNIFORM_UNKNOWN;
 	}
+#endif
 
 	glUniformBlockBinding(shader->id, index, bp);
 	hogl_gl_check();
@@ -546,10 +548,12 @@ hogl_error hogl_shader_sampler_location(hogl_shader* shader, const char* sampler
 	int index = glGetUniformLocation(shader->id, sampler_name);
 	hogl_gl_check();
 
+#ifndef HOGL_DISABLE_GL_WARNING
 	if (index == -1 || index == GL_INVALID_INDEX) {
 		hogl_log_warn("Trying to bind sampler %s to non existing bind point %ld", sampler_name, bp);
 		return HOGL_ERROR_UNIFORM_UNKNOWN;
 	}
+#endif
 
 	glUniform1i(index, bp);
 	hogl_gl_check();
