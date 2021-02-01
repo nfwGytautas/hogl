@@ -10,6 +10,13 @@
 	#define HOGL_CPP_API
 #endif
 
+/**
+* Some hogl functionality can be disabled by passing preprocessor flags, by default all of functionality is enabled
+* these are all the flags that can be passed:
+*
+* HOGL_SUPPRESS_ENTITY_CHECKS				Suppresses all entt error logging
+*/
+
 namespace hogl {
 	constexpr size_t MAX_TEXTURE_UNITS = 16;
 }

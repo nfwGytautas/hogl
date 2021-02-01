@@ -3,6 +3,7 @@
 #include "hogl/core/object_storage.hpp"
 #include "hogl/core/framebuffer.hpp"
 #include "hogl/io/asset_manager.hpp"
+#include "hogl/entity/camera.hpp"
 
 #include <math.h>
 
@@ -59,6 +60,9 @@ const unsigned int Y_SEGMENTS = 64;
 const float PI = 3.14159265359;
 
 hogl::object_storage* storage = nullptr;
+
+hogl::camera scene_camera(45.0f, 0.1f, 100.0f, 1280.0f, 720.0f);
+hogl::camera gen_camera(90.0f, 0.1f, 10.0f, 1.0f, 1.0f);
 
 prefilter_data pfd;
 pbr_data pbrd;
@@ -650,20 +654,6 @@ void setup_ubos(void) {
     hogl_ubo_new(&prefilterUBO, desc);
 }
 
-void perspective(float fov, float aspect, float near, float far, float* mret) {
-    float D2R = PI / 180.0;
-    float yScale = 1.0 / tan(D2R * fov / 2);
-    float xScale = yScale / aspect;
-    float nearmfar = near - far;
-    float m[] = {
-        xScale, 0, 0, 0,
-        0, yScale, 0, 0,
-        0, 0, (far + near) / nearmfar, -1,
-        0, 0, 2 * far * near / nearmfar, 0
-    };
-    memcpy(mret, m, sizeof(float) * 16);
-}
-
 void normalize(vec3* p) {
     float w = sqrt(p->x * p->x + p->y * p->y + p->z * p->z);
     p->x /= w;
@@ -682,51 +672,6 @@ vec3 cross(vec3 l, vec3 r) {
 float dot(vec3 l, vec3 r)
 {
     return l.x * r.x + l.y * r.y + l.z * r.z;
-}
-
-void look_at(vec3 eye, vec3 target, vec3 up, float* mret)
-{
-    vec3 f = { 0 };
-    vec3 u = { 0 };
-    vec3 s = { 0 };
-    vec3 center = { 0 };
-
-    center.x = eye.x + target.x;
-    center.y = eye.y + target.y;
-    center.z = eye.z + target.z;
-
-    f.x = center.x - eye.x;
-    f.y = center.y - eye.y;
-    f.z = center.z - eye.z;
-
-    u = up;
-
-    normalize(&f);
-    normalize(&u);
-
-    s = cross(f, u);
-    normalize(&s);
-
-    u = cross(s, f);
-
-    // Identity 1
-    mret[0 + (0 * 4)] = 1.0f;
-    mret[1 + (1 * 4)] = 1.0f;
-    mret[2 + (2 * 4)] = 1.0f;
-    mret[3 + (3 * 4)] = 1.0f;
-
-    mret[0 + (0 * 4)] = s.x;
-    mret[0 + (1 * 4)] = s.y;
-    mret[0 + (2 * 4)] = s.z;
-    mret[1 + (0 * 4)] = u.x;
-    mret[1 + (1 * 4)] = u.y;
-    mret[1 + (2 * 4)] = u.z;
-    mret[2 + (0 * 4)] = -f.x;
-    mret[2 + (1 * 4)] = -f.y;
-    mret[2 + (2 * 4)] = -f.z;
-    mret[0 + (3 * 4)] = -dot(s, eye);
-    mret[1 + (3 * 4)] = -dot(u, eye);
-    mret[2 + (3 * 4)] = dot(f, eye);
 }
 
 void translate(vec3 val, float* mret) {
@@ -800,9 +745,6 @@ void prepare_pbr(void) {
 
     float views[6][16];
     hogl_rstate rstate;
-    vec3 eye = { 0 };
-    vec3 target = { 0 };
-    vec3 up = { 0 };
     float listenerOrientation[6];
     hogl_abuffer_desc adesc;
     adesc.data = NULL;
@@ -823,43 +765,32 @@ void prepare_pbr(void) {
     setup_fbos();
 
     // PROJECTION
-    perspective(90.0f, 1.0f, 0.1f, 10.0f, &md.projection[0]);
+    hogl_smemcpy(&md.projection[0], glm::value_ptr(gen_camera.compute_projection()), 16 * sizeof(float));
 
     // View
-    eye.x = 0.0f;
-    eye.y = 0.0f;
-    eye.z = 0.0f;
+    gen_camera.reposition({ 0.0f, 0.0f, 0.0f });
 
-    target.x = 1.0f;
-    target.y = 0.0f;
-    target.z = 0.0f;
+    gen_camera.look_at({ 1.0f, 0.0f, 0.0f });
+    gen_camera.up({ 0.0f, -1.0f, 0.0f });
+    hogl_smemcpy(&views[0][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
 
-    up.x = 0.0f;
-    up.y = -1.0f;
-    up.z = 0.0f;
-    look_at(eye, target, up, &views[0][0]);
+    gen_camera.look_at({ -1.0f, 0.0f, 0.0f });
+    hogl_smemcpy(&views[1][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    
+    gen_camera.look_at({ 0.0f, 1.0f, 0.0f });
+    gen_camera.up({ 0.0f, 0.0f, 1.0f });
+    hogl_smemcpy(&views[2][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
 
-    target.x = -1.0f;
-    look_at(eye, target, up, &views[1][0]);
+    gen_camera.look_at({ 0.0f, -1.0f, 0.0f });
+    gen_camera.up({ 0.0f, 0.0f, -1.0f });
+    hogl_smemcpy(&views[3][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
 
-    target.x = 0.0f;
-    target.y = 1.0f;
-    up.y = 0.0f;
-    up.z = 1.0f;
-    look_at(eye, target, up, &views[2][0]);
+    gen_camera.look_at({ 0.0f, 0.0f, 1.0f });
+    gen_camera.up({ 0.0f, -1.0f, 0.0f });
+    hogl_smemcpy(&views[4][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
 
-    target.y = -1.0f;
-    up.z = -1.0f;
-    look_at(eye, target, up, &views[3][0]);
-
-    target.y = 0.0f;
-    target.z = 1.0f;
-    up.z = 0.0f;
-    up.y = -1.0f;
-    look_at(eye, target, up, &views[4][0]);
-
-    target.z = -1.0f;
-    look_at(eye, target, up, &views[5][0]);
+    gen_camera.look_at({ 0.0f, 0.0f, -1.0f });
+    hogl_smemcpy(&views[5][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
 
     fbo->bind();
     hogl_renderbuffer_bind(rbo);
@@ -880,7 +811,7 @@ void prepare_pbr(void) {
         fbo->ca(envCubemap.relay_as<hogl::texture>(), 0, 0);
 
         hogl_render_clear(0.5f, 0, 0, 0);
-        hogl_render_a(HOGL_RM_TRIANGLES, 36);
+        cubeMesh->render(HOGL_RM_TRIANGLES);
     }
 
     envCubemap->gen_mipmap();
@@ -899,8 +830,8 @@ void prepare_pbr(void) {
         irradianceMap->set_side((hogl_cm_side)i);
         fbo->ca(irradianceMap.relay_as<hogl::texture>(), 0, 0);
 
-        hogl_render_clear(0, 0, 0, 0);
-        hogl_render_a(HOGL_RM_TRIANGLES, 36);
+        hogl_render_clear(0.5f, 0, 0, 0);
+        cubeMesh->render(HOGL_RM_TRIANGLES);
     }
 
     hogl_shader_bind(prefilterShader);
@@ -919,8 +850,7 @@ void prepare_pbr(void) {
         pfd.roughness = roughness;
         hogl_ubo_data(prefilterUBO, &pfd, sizeof(prefilter_data));
 
-        for (unsigned int i = 0; i < 6; ++i)
-        {
+        for (unsigned int i = 0; i < 6; ++i) {
             memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
             hogl_ubo_data(matricesUBO, &md, sizeof(md));
 
@@ -928,7 +858,7 @@ void prepare_pbr(void) {
             fbo->ca(prefilterMap.relay_as<hogl::texture>(), 0, mip);
 
             hogl_render_clear(0, 0, 0, 0);
-            hogl_render_a(HOGL_RM_TRIANGLES, 36);
+            cubeMesh->render(HOGL_RM_TRIANGLES);
         }
     }
 
@@ -947,7 +877,7 @@ void prepare_pbr(void) {
     //hogl_render_a(HOGL_RM_TRIANGLE_STRIP, 4);
     quadMesh->render(HOGL_RM_TRIANGLE_STRIP);
 
-    perspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f, &md.projection[0]);
+    hogl_smemcpy(&md.projection[0], glm::value_ptr(scene_camera.compute_projection()), 16 * sizeof(float));
 
     hogl_reset_framebuffer();
     hogl_viewport(1280, 720);
@@ -1021,21 +951,12 @@ void render_pbr(void) {
     pbrd.lightPosition[3][2] = 10.0f;
     pbrd.lightColor[3][2] = 300.0f;
 
-    hogl_render_clear(0.2f * 255, 0.3f * 255, 0.3f * 256, 1.0f * 255);
+    hogl_render_clear(0.2f * 255, 0.3f * 255, 0.3f * 255, 1.0f * 255);
 
-    eye.x = 0.0f;
-    eye.y = 0.0f;
-    eye.z = 10.0f;
-
-    target.x = 0.0f;
-    target.y = 0.0f;
-    target.z = -1.0f;
-
-    up.x = 0.0f;
-    up.y = 1.0f;
-    up.z = 1.0f;
-
-    look_at(eye, target, up, &view[0]);
+    scene_camera.reposition({ 0.0f, 0.0f, 10.0f });
+    scene_camera.look_at({ 0.0f, 0.0f, -2.0f });
+    scene_camera.up({ 0.0f, 1.0f, 0.0f });
+    hogl_smemcpy(&view[0], glm::value_ptr(scene_camera.compute_view()), 16 * sizeof(float));
 
     memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
 

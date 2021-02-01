@@ -8,3 +8,7 @@ This folder contains the libraries that are bundled inside the hogl C api
 3. openal-soft used to provide sound API for the library (Must be dynamically linked because of LPGL)
 
 4. pugixml used to provide xml parsing (Static linked with MIT)
+
+5. glm used to provide math functionality to the engine
+
+6. entt ECS framework
