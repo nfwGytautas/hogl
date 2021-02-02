@@ -5,8 +5,7 @@
 file(GLOB_RECURSE CPP_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
 
 # Lib mode
-add_library(hogl SHARED ${CPP_SOURCE_FILES})
-target_compile_definitions(hogl PUBLIC HOGL_CPP_EXPORT PUBLIC ENTT_DLL_EXPORT)
+add_library(hogl STATIC ${CPP_SOURCE_FILES})
 
 # Lib folders
 target_link_directories(hogl PUBLIC ${PROJECT_SOURCE_DIR}/dependencies/)

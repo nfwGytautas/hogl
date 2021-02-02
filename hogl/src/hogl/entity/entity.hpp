@@ -23,7 +23,7 @@ namespace hogl {
 		template<typename T, typename... Args>
 		T& add_component(Args&&... args) {
 #ifndef HOGL_SUPPRESS_ENTITY_CHECKS
-			if (!has_component<T>()) {
+			if (has_component<T>()) {
 				hogl_log_warn("Trying to add an already existing component!");
 				return this->get_component<T>();
 			}

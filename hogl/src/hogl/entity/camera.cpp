@@ -4,6 +4,8 @@
 #include <glm/gtx/quaternion.hpp>
 
 namespace hogl {
+	camera::camera() : camera(90.0f, 0.1f, 10.0f, 1.0f, 1.0f) {}
+
 	camera::camera(float fov, float nearclip, float farclip, unsigned int vwidth, unsigned int vheight)
 		: m_fov(fov), m_nearclip(nearclip), m_farclip(farclip), m_aspect((float)vwidth / (float)vheight)
 	{

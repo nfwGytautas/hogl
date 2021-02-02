@@ -5,8 +5,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "hogl/shared/hogl_def.hpp"
-#include "hogl/core/object.hpp"
-#include "hogl/entity/entity.hpp"
 
 namespace hogl {
 
@@ -15,6 +13,8 @@ namespace hogl {
 	*/
 	class HOGL_CPP_API camera {
 	public:
+		camera();
+
 		/**
 		 * @brief Initializes a camera with specified initial values
 		 * @param fov FoV of the camera

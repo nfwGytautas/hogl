@@ -6,7 +6,7 @@ file(GLOB_RECURSE UI_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_
 
 # Lib mode
 add_library(hogl_ui SHARED ${UI_SOURCE_FILES})
-target_compile_definitions(hogl_ui PUBLIC HOGL_UI_EXPORT)
+target_compile_definitions(hogl_ui PRIVATE HOGL_UI_EXPORT)
 
 # Lib folders
 target_link_directories(hogl_ui PUBLIC ${PROJECT_SOURCE_DIR}/dependencies/)

@@ -11,6 +11,10 @@ namespace hogl {
 		hogl_vao_free(m_vao);
 	}
 
+	void mesh::set_render_mode(hogl_render_mode rmode) {
+		m_rmode = rmode;
+	}
+
 	void mesh::add_buffer(const ref<gpu_buffer>& buffer) {
 		if (buffer->type() == HOGL_VBOT_ELEMENT_BUFFER) {
 			m_ecount = buffer->count();
@@ -29,12 +33,12 @@ namespace hogl {
 		hogl_vao_bind(m_vao);
 	}
 
-	void mesh::render(hogl_render_mode mode) {
+	void mesh::render() {
 		if (m_ecount > 0) {
-			hogl_render_e(mode, m_ecount);
+			hogl_render_e(m_rmode, m_ecount);
 		}
 		else {
-			hogl_render_a(mode, m_vcount);
+			hogl_render_a(m_rmode, m_vcount);
 		}
 	}
 

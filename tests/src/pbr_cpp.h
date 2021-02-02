@@ -4,6 +4,8 @@
 #include "hogl/core/framebuffer.hpp"
 #include "hogl/io/asset_manager.hpp"
 #include "hogl/entity/camera.hpp"
+#include "hogl/entity/scene.hpp"
+#include "hogl/entity/components.hpp"
 
 #include <math.h>
 
@@ -63,6 +65,8 @@ hogl::object_storage* storage = nullptr;
 
 hogl::camera scene_camera(45.0f, 0.1f, 100.0f, 1280.0f, 720.0f);
 hogl::camera gen_camera(90.0f, 0.1f, 10.0f, 1.0f, 1.0f);
+
+hogl::scene scene;
 
 prefilter_data pfd;
 pbr_data pbrd;
@@ -280,6 +284,7 @@ void generate_basic_geometry(void) {
 
     cubeMesh = storage->create_new<hogl::mesh>().relay();
     cubeMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
+    cubeMesh->set_render_mode(HOGL_RM_TRIANGLES);
 
     // Quad
     descs[0].data = quad_vertices;
@@ -306,6 +311,7 @@ void generate_basic_geometry(void) {
 
     quadMesh = storage->create_new<hogl::mesh>().relay();
     quadMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
+    quadMesh->set_render_mode(HOGL_RM_TRIANGLE_STRIP);
 
     // Sphere
     sphere_vertices = generate_sphere_vertices();
@@ -351,6 +357,7 @@ void generate_basic_geometry(void) {
     sphereMesh = storage->create_new<hogl::mesh>().relay();
     sphereMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[0]));
     sphereMesh->add_buffer(storage->create_new<hogl::gpu_buffer>(descs[1]));
+    sphereMesh->set_render_mode(HOGL_RM_TRIANGLE_STRIP);
 
     hogl_free(sphere_vertices);
     hogl_free(sphere_indices);
@@ -811,7 +818,7 @@ void prepare_pbr(void) {
         fbo->ca(envCubemap.relay_as<hogl::texture>(), 0, 0);
 
         hogl_render_clear(0.5f, 0, 0, 0);
-        cubeMesh->render(HOGL_RM_TRIANGLES);
+        cubeMesh->render();
     }
 
     envCubemap->gen_mipmap();
@@ -831,7 +838,7 @@ void prepare_pbr(void) {
         fbo->ca(irradianceMap.relay_as<hogl::texture>(), 0, 0);
 
         hogl_render_clear(0.5f, 0, 0, 0);
-        cubeMesh->render(HOGL_RM_TRIANGLES);
+        cubeMesh->render();
     }
 
     hogl_shader_bind(prefilterShader);
@@ -858,7 +865,7 @@ void prepare_pbr(void) {
             fbo->ca(prefilterMap.relay_as<hogl::texture>(), 0, mip);
 
             hogl_render_clear(0, 0, 0, 0);
-            cubeMesh->render(HOGL_RM_TRIANGLES);
+            cubeMesh->render();
         }
     }
 
@@ -874,8 +881,7 @@ void prepare_pbr(void) {
     hogl_set_depth_test(HOGL_RD_LEQUAL);
 
     hogl_render_clear(0, 0, 0, 0);
-    //hogl_render_a(HOGL_RM_TRIANGLE_STRIP, 4);
-    quadMesh->render(HOGL_RM_TRIANGLE_STRIP);
+    quadMesh->render();
 
     hogl_smemcpy(&md.projection[0], glm::value_ptr(scene_camera.compute_projection()), 16 * sizeof(float));
 
@@ -906,6 +912,19 @@ void prepare_pbr(void) {
     iron->set_texture(irradianceMap.as<hogl::texture>(), 0);
     iron->set_texture(prefilterMap.as<hogl::texture>(), 1);
     iron->set_texture(brdfLUTTexture, 2);
+
+    scene_camera.reposition({ 0.0f, 0.0f, 10.0f });
+    scene_camera.look_at({ 0.0f, 0.0f, -2.0f });
+    scene_camera.up({ 0.0f, 1.0f, 0.0f });
+
+    scene.set_camera(scene_camera);
+
+    hogl::entity entity = scene.spawn_entity();
+    auto& transform = entity.get_component<hogl::transform_component>();
+    transform.position.z = 2.0f;
+
+    entity.add_component<hogl::mesh_component>(sphereMesh);
+    entity.add_component<hogl::renderer_component>(iron);
 }
 
 void render_pbr(void) {
@@ -953,9 +972,6 @@ void render_pbr(void) {
 
     hogl_render_clear(0.2f * 255, 0.3f * 255, 0.3f * 255, 1.0f * 255);
 
-    scene_camera.reposition({ 0.0f, 0.0f, 10.0f });
-    scene_camera.look_at({ 0.0f, 0.0f, -2.0f });
-    scene_camera.up({ 0.0f, 1.0f, 0.0f });
     hogl_smemcpy(&view[0], glm::value_ptr(scene_camera.compute_view()), 16 * sizeof(float));
 
     memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
@@ -979,10 +995,7 @@ void render_pbr(void) {
     memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
     hogl_ubo_data(pbrDataUBO, &pbrd, sizeof(pbr_data));
 
-    sphereMesh->bind();
-    iron->bind();
-
-    sphereMesh->render(HOGL_RM_TRIANGLE_STRIP);
+    scene.render();
 
     memcpy(&model[0], &identity[0], 16 * sizeof(float));
 
@@ -993,7 +1006,7 @@ void render_pbr(void) {
     cubeMesh->bind();
     hogl_shader_bind(backgroundShader);
     envCubemap->bind(0);
-    cubeMesh->render(HOGL_RM_TRIANGLES);
+    cubeMesh->render();
 
     //hogl_source_position(audioSource, 0.0f, audio_y, 0.0f);
     hogl_listener_position(0.0f, audio_y, 0.0f);

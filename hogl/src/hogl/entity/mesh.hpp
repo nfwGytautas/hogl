@@ -20,6 +20,12 @@ namespace hogl {
 		~mesh();
 
 		/**
+		 * @brief Sets the way the mesh is rendered
+		 * @param rmode Rendering mode
+		*/
+		void set_render_mode(hogl_render_mode rmode);
+
+		/**
 		 * @brief Adds the specified buffer to the mesh
 		 * @param buffer Buffer to add
 		*/
@@ -33,8 +39,9 @@ namespace hogl {
 		/**
 		 * @brief Renders the mesh
 		*/
-		void render(hogl_render_mode mode);
+		void render();
 	private:
+		hogl_render_mode m_rmode = HOGL_RM_TRIANGLES;
 		std::vector<ref<gpu_buffer>> m_buffers = {};
 		hogl_vao* m_vao = nullptr;
 		size_t m_vcount = 0;

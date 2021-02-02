@@ -8,6 +8,7 @@
 #include "pbr_cpp.h"
 //#include "pbr.h"
 #include "ui.h"
+#include "lib.h"
 
 void pbr(void) {
 	hogl_wnd* hwindow = NULL;
@@ -51,6 +52,7 @@ void pbr(void) {
 
 int main(int argc, char** argv) {
 	//ui();
+	lib();
 	pbr();
 
 	return 0;

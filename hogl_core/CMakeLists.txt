@@ -6,7 +6,7 @@ file(GLOB_RECURSE CORE_SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c ${CMAKE_
 
 # Lib mode
 add_library(hogl_core SHARED ${CORE_SOURCE_FILES})
-target_compile_definitions(hogl_core PUBLIC HOGL_EXPORT)
+target_compile_definitions(hogl_core PRIVATE HOGL_EXPORT)
 
 # Lib folders
 target_link_directories(hogl_core PUBLIC ${PROJECT_SOURCE_DIR}/dependencies/)
