@@ -38,6 +38,7 @@ namespace hogl {
 
 		/**
 		 * @brief Renders the mesh
+		 * TODO: Maybe move to dedicated renderer
 		*/
 		void render();
 	private:

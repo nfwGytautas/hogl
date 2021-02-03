@@ -1,8 +1,10 @@
+#include "hogl/engine/object_storage.hpp"
+#include "hogl/engine/ubo_manager.hpp"
+#include "hogl/io/asset_manager.hpp"
+#include "hogl/core/framebuffer.hpp"
+#include "hogl/core/ubo.hpp"
 #include "hogl/entity/mesh.hpp"
 #include "hogl/entity/material.hpp"
-#include "hogl/core/object_storage.hpp"
-#include "hogl/core/framebuffer.hpp"
-#include "hogl/io/asset_manager.hpp"
 #include "hogl/entity/camera.hpp"
 #include "hogl/entity/scene.hpp"
 #include "hogl/entity/components.hpp"
@@ -12,33 +14,37 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-typedef struct _prefilter_data
-{
-    float roughness;
-} prefilter_data;
+class prefilter_ubo : public hogl::ubo {
+public:
+    struct data {
+        float roughness;
+    } data;
 
-typedef struct _pbr_data
-{
-    float model[16];
+    prefilter_ubo()
+        : ubo("prefilter", 4, sizeof(data))
+    {
+        p_iBuff = &data;
+    }
+};
 
-    // UBO requires alignment multiple of 16
-    float lightPosition[4][4];
-    float lightColor[4][4];
+class pbr_ubo : public hogl::ubo {
+public:
+    struct data {
+        glm::mat4 model;
 
-    float camPos[4];
-} pbr_data;
+        // UBO requires alignment multiple of 16
+        float lightPosition[4][4];
+        float lightColor[4][4];
 
-typedef struct _matrices_data
-{
-    float projection[16];
-    float view[16];
-} matrices_data;
+        float camPos[4];
+    } data;
 
-typedef struct _vec3 {
-    float x;
-    float y;
-    float z;
-} vec3;
+    pbr_ubo()
+        : ubo("pbr_data", 5, sizeof(data))
+    {
+        p_iBuff = &data;
+    }
+};
 
 typedef struct _wavfh
 {
@@ -62,23 +68,20 @@ const unsigned int Y_SEGMENTS = 64;
 const float PI = 3.14159265359;
 
 hogl::object_storage* storage = nullptr;
+hogl::ubo_manager* ubo_manager = nullptr;
+hogl::asset_manager* asset_manager = nullptr;
 
 hogl::camera scene_camera(45.0f, 0.1f, 100.0f, 1280.0f, 720.0f);
 hogl::camera gen_camera(90.0f, 0.1f, 10.0f, 1.0f, 1.0f);
 
-hogl::scene scene;
+hogl::scene* scene = nullptr;
 
-prefilter_data pfd;
-pbr_data pbrd;
-matrices_data md;
+hogl::relay_ptr<pbr_ubo> pbrUBO;
+hogl::relay_ptr<prefilter_ubo> prefilterUBO;
 
 hogl::relay_ptr<hogl::mesh> cubeMesh;
 hogl::relay_ptr<hogl::mesh> quadMesh;
 hogl::relay_ptr<hogl::mesh> sphereMesh;
-
-hogl_ubo* pbrDataUBO;
-hogl_ubo* matricesUBO;
-hogl_ubo* prefilterUBO;
 
 hogl_shader* equirectangularToCubemapShader;
 hogl_shader* irradianceShader;
@@ -364,29 +367,19 @@ void generate_basic_geometry(void) {
 }
 
 void create_ubos(void) {
-    hogl_ubo_desc desc;
-    desc.offset = 0;
-
-    desc.bp = 0;
-    desc.stride = sizeof(pbr_data);
-    hogl_ubo_new(&pbrDataUBO, desc);
-
-    desc.bp = 4;
-    desc.stride = sizeof(prefilter_data);
-    hogl_ubo_new(&prefilterUBO, desc);
-
-    desc.bp = 7;
-    desc.stride = sizeof(matricesUBO);
-    hogl_ubo_new(&matricesUBO, desc);
+    prefilterUBO = storage->create_new<prefilter_ubo>().relay();
+    pbrUBO = storage->create_new<pbr_ubo>().relay();
 }
 
 void load_shaders(void) {
     hogl_shader_desc desc;
 
-    //desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\nlayout (location = 2) in vec2 aTexCoords;\nlayout (location = 1) in vec3 aNormal;\n\nout vec2 TexCoords;\nout vec3 WorldPos;\nout vec3 Normal;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nvoid main()\n{\n    TexCoords = aTexCoords;\n    WorldPos = vec3(model * vec4(aPos, 1.0));\n    Normal = mat3(model) * aNormal;   \n\n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
-    desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\nlayout (location = 1) in vec2 aTexCoords;\nlayout (location = 2) in vec3 aNormal;\n\nout vec2 TexCoords;\nout vec3 WorldPos;\nout vec3 Normal;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nvoid main()\n{\n    TexCoords = aTexCoords;\n    WorldPos = vec3(model * vec4(aPos, 1.0));\n    Normal = mat3(model) * aNormal;   \n\n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
-    desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec2 TexCoords;\nin vec3 WorldPos;\nin vec3 Normal;\n\n// IBL\nuniform samplerCube irradianceMap;\nuniform samplerCube prefilterMap;\nuniform sampler2D brdfLUT;\n\n// material parameters\nuniform sampler2D albedoMap;\nuniform sampler2D normalMap;\nuniform sampler2D metallicMap;\nuniform sampler2D roughnessMap;\nuniform sampler2D aoMap;\n\nlayout (std140, binding = 5) uniform pbr_data\n{\n    uniform mat4 model;\n\n    // lights\n    uniform vec4 lightPositions[4];\n    uniform vec4 lightColors[4];\n\n    uniform vec4 camPos;\n};\n\nconst float PI = 3.14159265359;\n// ----------------------------------------------------------------------------\n// Easy trick to get tangent-normals to world-space to keep PBR code simplified.\n// Don't worry if you don't get what's going on; you generally want to do normal \n// mapping the usual way for performance anways; I do plan make a note of this \n// technique somewhere later in the normal mapping tutorial.\nvec3 getNormalFromMap()\n{\n    vec3 tangentNormal = texture(normalMap, TexCoords).xyz * 2.0 - 1.0;\n\n    vec3 Q1  = dFdx(WorldPos);\n    vec3 Q2  = dFdy(WorldPos);\n    vec2 st1 = dFdx(TexCoords);\n    vec2 st2 = dFdy(TexCoords);\n\n    vec3 N   = normalize(Normal);\n    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);\n    vec3 B  = -normalize(cross(N, T));\n    mat3 TBN = mat3(T, B, N);\n\n    return normalize(TBN * tangentNormal);\n}\n// ----------------------------------------------------------------------------\nfloat DistributionGGX(vec3 N, vec3 H, float roughness)\n{\n    float a = roughness*roughness;\n    float a2 = a*a;\n    float NdotH = max(dot(N, H), 0.0);\n    float NdotH2 = NdotH*NdotH;\n\n    float nom   = a2;\n    float denom = (NdotH2 * (a2 - 1.0) + 1.0);\n    denom = PI * denom * denom;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySchlickGGX(float NdotV, float roughness)\n{\n    float r = (roughness + 1.0);\n    float k = (r*r) / 8.0;\n\n    float nom   = NdotV;\n    float denom = NdotV * (1.0 - k) + k;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)\n{\n    float NdotV = max(dot(N, V), 0.0);\n    float NdotL = max(dot(N, L), 0.0);\n    float ggx2 = GeometrySchlickGGX(NdotV, roughness);\n    float ggx1 = GeometrySchlickGGX(NdotL, roughness);\n\n    return ggx1 * ggx2;\n}\n// ----------------------------------------------------------------------------\nvec3 fresnelSchlick(float cosTheta, vec3 F0)\n{\n    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);\n}\n// ----------------------------------------------------------------------------\nvec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)\n{\n    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);\n}   \n// ----------------------------------------------------------------------------\nvoid main()\n{\t\t\n    // material properties\n    vec3 albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(2.2));\n    float metallic = texture(metallicMap, TexCoords).r;\n    float roughness = texture(roughnessMap, TexCoords).r;\n    float ao = texture(aoMap, TexCoords).r;\n       \n    // input lighting data\n    vec3 N = getNormalFromMap();\n    vec3 V = normalize(camPos.xyz - WorldPos);\n    vec3 R = reflect(-V, N); \n\n    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 \n    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    \n    vec3 F0 = vec3(0.04); \n    F0 = mix(F0, albedo, metallic);\n\n    // reflectance equation\n    vec3 Lo = vec3(0.0);\n    for(int i = 0; i < 4; ++i) \n    {\n        // calculate per-light radiance\n        vec3 L = normalize(lightPositions[i].xyz - WorldPos);\n        vec3 H = normalize(V + L);\n        float distance = length(lightPositions[i].xyz - WorldPos);\n        float attenuation = 1.0 / (distance * distance);\n        vec3 radiance = lightColors[i].xyz * attenuation;\n\n        // Cook-Torrance BRDF\n        float NDF = DistributionGGX(N, H, roughness);   \n        float G   = GeometrySmith(N, V, L, roughness);    \n        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);        \n        \n        vec3 nominator    = NDF * G * F;\n        float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001; // 0.001 to prevent divide by zero.\n        vec3 specular = nominator / denominator;\n        \n         // kS is equal to Fresnel\n        vec3 kS = F;\n        // for energy conservation, the diffuse and specular light can't\n        // be above 1.0 (unless the surface emits light); to preserve this\n        // relationship the diffuse component (kD) should equal 1.0 - kS.\n        vec3 kD = vec3(1.0) - kS;\n        // multiply kD by the inverse metalness such that only non-metals \n        // have diffuse lighting, or a linear blend if partly metal (pure metals\n        // have no diffuse light).\n        kD *= 1.0 - metallic;\t                \n            \n        // scale light by NdotL\n        float NdotL = max(dot(N, L), 0.0);        \n\n        // add to outgoing radiance Lo\n        Lo += (kD * albedo / PI + specular) * radiance * NdotL; // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again\n    }   \n    \n    // ambient lighting (we now use IBL as the ambient term)\n    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);\n    \n    vec3 kS = F;\n    vec3 kD = 1.0 - kS;\n    kD *= 1.0 - metallic;\t  \n    \n    vec3 irradiance = texture(irradianceMap, N).rgb;\n    vec3 diffuse      = irradiance * albedo;\n    \n    // sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.\n    const float MAX_REFLECTION_LOD = 4.0;\n    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;    \n    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;\n    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);\n\n    vec3 ambient = (kD * diffuse + specular) * ao;\n    \n    vec3 color = ambient + Lo;\n\n    // HDR tonemapping\n    color = color / (color + vec3(1.0));\n    // gamma correct\n    color = pow(color, vec3(1.0/2.2)); \n\n    FragColor = vec4(color , 1.0);\n}\n";
-    
+    std::string vertexSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.pbr.vs");
+    std::string fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.pbr.fs");
+
+    desc.vertex_source = vertexSrc.c_str();
+    desc.fragment_source = fragSrc.c_str();
+
     hogl::ref<hogl::shader> pbrShader = storage->create_new<hogl::shader>(desc);
     pbrShader->bind();
 
@@ -398,39 +391,48 @@ void load_shaders(void) {
     pbrShader->sampler_location("metallicMap", 5);
     pbrShader->sampler_location("roughnessMap", 6);
     pbrShader->sampler_location("aoMap", 7);
-    pbrShader->ubo_location("pbr_data", 5);
-    pbrShader->ubo_location("matrices", 7);
+    pbrShader->ubo_attach(pbrUBO.as<hogl::ubo>());
 
-    desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\n\nout vec3 WorldPos;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nvoid main()\n{\n    WorldPos = aPos;  \n    gl_Position =  projection * view * vec4(WorldPos, 1.0);\n}";
+    ubo_manager->std_pkg()->attach_to(pbrShader.relay());
 
-    desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec3 WorldPos;\n\nuniform sampler2D equirectangularMap;\n\nconst vec2 invAtan = vec2(0.1591, 0.3183);\nvec2 SampleSphericalMap(vec3 v)\n{\n    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));\n    uv *= invAtan;\n    uv += 0.5;\n    return uv;\n}\n\nvoid main()\n{\t\t\n    vec2 uv = SampleSphericalMap(normalize(WorldPos));\n    vec3 color = texture(equirectangularMap, uv).rgb;\n    \n    FragColor = vec4(color, 1.0);\n}\n";
+    vertexSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.cubemap.vs");
+    desc.vertex_source = vertexSrc.c_str();
+
+    fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.equirectangular_to_cubemap.fs");
+    desc.fragment_source = fragSrc.c_str();
     hogl_shader_new(&equirectangularToCubemapShader, desc);
     hogl_shader_bind(equirectangularToCubemapShader);
     hogl_shader_sampler_location(equirectangularToCubemapShader, "equirectangularMap", 0);
-    hogl_shader_ubo_binding(equirectangularToCubemapShader, "matrices", 7);
+    hogl_shader_ubo_binding(equirectangularToCubemapShader, "per_pass", 0);
 
-    desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec3 WorldPos;\n\nuniform samplerCube environmentMap;\n\nlayout (std140, binding = 4) uniform prefilter\n{\n    uniform float roughness;\n};\n\nconst float PI = 3.14159265359;\n// ----------------------------------------------------------------------------\nfloat DistributionGGX(vec3 N, vec3 H, float roughness)\n{\n    float a = roughness*roughness;\n    float a2 = a*a;\n    float NdotH = max(dot(N, H), 0.0);\n    float NdotH2 = NdotH*NdotH;\n\n    float nom   = a2;\n    float denom = (NdotH2 * (a2 - 1.0) + 1.0);\n    denom = PI * denom * denom;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\n// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html\n// efficient VanDerCorpus calculation.\nfloat RadicalInverse_VdC(uint bits) \n{\n     bits = (bits << 16u) | (bits >> 16u);\n     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);\n     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);\n     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);\n     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);\n     return float(bits) * 2.3283064365386963e-10; // / 0x100000000\n}\n// ----------------------------------------------------------------------------\nvec2 Hammersley(uint i, uint N)\n{\n\treturn vec2(float(i)/float(N), RadicalInverse_VdC(i));\n}\n// ----------------------------------------------------------------------------\nvec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)\n{\n\tfloat a = roughness*roughness;\n\t\n\tfloat phi = 2.0 * PI * Xi.x;\n\tfloat cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a*a - 1.0) * Xi.y));\n\tfloat sinTheta = sqrt(1.0 - cosTheta*cosTheta);\n\t\n\t// from spherical coordinates to cartesian coordinates - halfway vector\n\tvec3 H;\n\tH.x = cos(phi) * sinTheta;\n\tH.y = sin(phi) * sinTheta;\n\tH.z = cosTheta;\n\t\n\t// from tangent-space H vector to world-space sample vector\n\tvec3 up          = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);\n\tvec3 tangent   = normalize(cross(up, N));\n\tvec3 bitangent = cross(N, tangent);\n\t\n\tvec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;\n\treturn normalize(sampleVec);\n}\n// ----------------------------------------------------------------------------\nvoid main()\n{\t\t\n    vec3 N = normalize(WorldPos);\n    \n    // make the simplyfying assumption that V equals R equals the normal \n    vec3 R = N;\n    vec3 V = R;\n\n    const uint SAMPLE_COUNT = 1024u;\n    vec3 prefilteredColor = vec3(0.0);\n    float totalWeight = 0.0;\n    \n    for(uint i = 0u; i < SAMPLE_COUNT; ++i)\n    {\n        // generates a sample vector that's biased towards the preferred alignment direction (importance sampling).\n        vec2 Xi = Hammersley(i, SAMPLE_COUNT);\n        vec3 H = ImportanceSampleGGX(Xi, N, roughness);\n        vec3 L  = normalize(2.0 * dot(V, H) * H - V);\n\n        float NdotL = max(dot(N, L), 0.0);\n        if(NdotL > 0.0)\n        {\n            // sample from the environment's mip level based on roughness/pdf\n            float D   = DistributionGGX(N, H, roughness);\n            float NdotH = max(dot(N, H), 0.0);\n            float HdotV = max(dot(H, V), 0.0);\n            float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; \n\n            float resolution = 512.0; // resolution of source cubemap (per face)\n            float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);\n            float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);\n\n            float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); \n            \n            prefilteredColor += textureLod(environmentMap, L, mipLevel).rgb * NdotL;\n            totalWeight      += NdotL;\n        }\n    }\n\n    prefilteredColor = prefilteredColor / totalWeight;\n\n    FragColor = vec4(prefilteredColor, 1.0);\n}\n";
+    fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.prefilter.fs");
+    desc.fragment_source = fragSrc.c_str();
     hogl_shader_new(&prefilterShader, desc);
     hogl_shader_bind(prefilterShader);
     hogl_shader_sampler_location(prefilterShader, "environmentMap", 0);
     hogl_shader_ubo_binding(prefilterShader, "prefilter", 4);
-    hogl_shader_ubo_binding(prefilterShader, "matrices", 7);
+    hogl_shader_ubo_binding(equirectangularToCubemapShader, "per_pass", 0);
 
-    desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec3 WorldPos;\n\nuniform samplerCube environmentMap;\n\nconst float PI = 3.14159265359;\n\nvoid main()\n{		\n    vec3 N = normalize(WorldPos);\n\n    vec3 irradiance = vec3(0.0);   \n    \n    // tangent space calculation from origin point\n    vec3 up    = vec3(0.0, 1.0, 0.0);\n    vec3 right = cross(up, N);\n    up            = cross(N, right);\n       \n    float sampleDelta = 0.025;\n    float nrSamples = 0.0f;\n    for(float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)\n    {\n        for(float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)\n        {\n            // spherical to cartesian (in tangent space)\n            vec3 tangentSample = vec3(sin(theta) * cos(phi),  sin(theta) * sin(phi), cos(theta));\n            // tangent space to world\n            vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N; \n\n            irradiance += texture(environmentMap, sampleVec).rgb * cos(theta) * sin(theta);\n            nrSamples++;\n        }\n    }\n    irradiance = PI * irradiance * (1.0 / float(nrSamples));\n    \n    FragColor = vec4(irradiance, 1.0);\n}\n";
+    fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.irradiance_convolution.fs");
+    desc.fragment_source = fragSrc.c_str();
     hogl_shader_new(&irradianceShader, desc);
     hogl_shader_bind(irradianceShader);
     hogl_shader_sampler_location(irradianceShader, "environmentMap", 0);
 
-    desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\nlayout (location = 1) in vec2 aTexCoords;\n\nout vec2 TexCoords;\n\nvoid main()\n{\n    TexCoords = aTexCoords;\n\tgl_Position = vec4(aPos, 1.0);\n}";
-    desc.fragment_source = "#version 420 core\nout vec2 FragColor;\nin vec2 TexCoords;\n\nconst float PI = 3.14159265359;\n// ----------------------------------------------------------------------------\n// http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html\n// efficient VanDerCorpus calculation.\nfloat RadicalInverse_VdC(uint bits) \n{\n     bits = (bits << 16u) | (bits >> 16u);\n     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);\n     bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);\n     bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);\n     bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);\n     return float(bits) * 2.3283064365386963e-10; // / 0x100000000\n}\n// ----------------------------------------------------------------------------\nvec2 Hammersley(uint i, uint N)\n{\n\treturn vec2(float(i)/float(N), RadicalInverse_VdC(i));\n}\n// ----------------------------------------------------------------------------\nvec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)\n{\n\tfloat a = roughness*roughness;\n\t\n\tfloat phi = 2.0 * PI * Xi.x;\n\tfloat cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a*a - 1.0) * Xi.y));\n\tfloat sinTheta = sqrt(1.0 - cosTheta*cosTheta);\n\t\n\t// from spherical coordinates to cartesian coordinates - halfway vector\n\tvec3 H;\n\tH.x = cos(phi) * sinTheta;\n\tH.y = sin(phi) * sinTheta;\n\tH.z = cosTheta;\n\t\n\t// from tangent-space H vector to world-space sample vector\n\tvec3 up          = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);\n\tvec3 tangent   = normalize(cross(up, N));\n\tvec3 bitangent = cross(N, tangent);\n\t\n\tvec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;\n\treturn normalize(sampleVec);\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySchlickGGX(float NdotV, float roughness)\n{\n    // note that we use a different k for IBL\n    float a = roughness;\n    float k = (a * a) / 2.0;\n\n    float nom   = NdotV;\n    float denom = NdotV * (1.0 - k) + k;\n\n    return nom / denom;\n}\n// ----------------------------------------------------------------------------\nfloat GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)\n{\n    float NdotV = max(dot(N, V), 0.0);\n    float NdotL = max(dot(N, L), 0.0);\n    float ggx2 = GeometrySchlickGGX(NdotV, roughness);\n    float ggx1 = GeometrySchlickGGX(NdotL, roughness);\n\n    return ggx1 * ggx2;\n}\n// ----------------------------------------------------------------------------\nvec2 IntegrateBRDF(float NdotV, float roughness)\n{\n    vec3 V;\n    V.x = sqrt(1.0 - NdotV*NdotV);\n    V.y = 0.0;\n    V.z = NdotV;\n\n    float A = 0.0;\n    float B = 0.0; \n\n    vec3 N = vec3(0.0, 0.0, 1.0);\n    \n    const uint SAMPLE_COUNT = 1024u;\n    for(uint i = 0u; i < SAMPLE_COUNT; ++i)\n    {\n        // generates a sample vector that's biased towards the\n        // preferred alignment direction (importance sampling).\n        vec2 Xi = Hammersley(i, SAMPLE_COUNT);\n        vec3 H = ImportanceSampleGGX(Xi, N, roughness);\n        vec3 L = normalize(2.0 * dot(V, H) * H - V);\n\n        float NdotL = max(L.z, 0.0);\n        float NdotH = max(H.z, 0.0);\n        float VdotH = max(dot(V, H), 0.0);\n\n        if(NdotL > 0.0)\n        {\n            float G = GeometrySmith(N, V, L, roughness);\n            float G_Vis = (G * VdotH) / (NdotH * NdotV);\n            float Fc = pow(1.0 - VdotH, 5.0);\n\n            A += (1.0 - Fc) * G_Vis;\n            B += Fc * G_Vis;\n        }\n    }\n    A /= float(SAMPLE_COUNT);\n    B /= float(SAMPLE_COUNT);\n    return vec2(A, B);\n}\n// ----------------------------------------------------------------------------\nvoid main() \n{\n    vec2 integratedBRDF = IntegrateBRDF(TexCoords.x, TexCoords.y);\n    FragColor = integratedBRDF;\n}";
+    vertexSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.brdf.vs");
+    desc.vertex_source = vertexSrc.c_str();
+    fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.brdf.fs");
+    desc.fragment_source = fragSrc.c_str();
     hogl_shader_new(&brdfShader, desc);
 
-    desc.vertex_source = "#version 420 core\nlayout (location = 0) in vec3 aPos;\n\nlayout (std140, binding = 7) uniform matrices\n{\n\tuniform mat4 projection;\n\tuniform mat4 view;\n};\n\nout vec3 WorldPos;\n\nvoid main()\n{\n    WorldPos = aPos;\n\n\tmat4 rotView = mat4(mat3(view));\n\tvec4 clipPos = projection * rotView * vec4(WorldPos, 1.0);\n\n\tgl_Position = clipPos.xyww;\n}";
-    desc.fragment_source = "#version 420 core\nout vec4 FragColor;\nin vec3 WorldPos;\n\nuniform samplerCube environmentMap;\n\nvoid main()\n{\t\t\n    vec3 envColor = textureLod(environmentMap, WorldPos, 0.0).rgb;\n    \n    // HDR tonemap and gamma correct\n    envColor = envColor / (envColor + vec3(1.0));\n    envColor = pow(envColor, vec3(1.0/2.2)); \n    \n    FragColor = vec4(envColor, 1.0);\n}\n";
+    vertexSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.background.vs");
+    desc.vertex_source = vertexSrc.c_str();
+    fragSrc = asset_manager->load_txt("res/shaders/pbr/2.2.2.background.fs");
+    desc.fragment_source = fragSrc.c_str();
     hogl_shader_new(&backgroundShader, desc);
     hogl_shader_bind(backgroundShader);
     hogl_shader_sampler_location(backgroundShader, "environmentMap", 0);
-    hogl_shader_ubo_binding(backgroundShader, "matrices", 7);
+    hogl_shader_ubo_binding(equirectangularToCubemapShader, "per_pass", 0);
 
     iron->set_shader(pbrShader);
 }
@@ -639,63 +641,6 @@ void setup_fbos(void) {
     fbo = storage->create_new<hogl::framebuffer>(desc).relay();
 }
 
-void setup_ubos(void) {
-    hogl_ubo_desc desc;
-
-    desc.bp = 5;
-    desc.offset = 0;
-    desc.stride = sizeof(pbr_data);
-
-    hogl_ubo_new(&pbrDataUBO, desc);
-
-    desc.bp = 7;
-    desc.offset = 0;
-    desc.stride = sizeof(matrices_data);
-
-    hogl_ubo_new(&matricesUBO, desc);
-
-    desc.bp = 4;
-    desc.offset = 0;
-    desc.stride = sizeof(prefilter_data);
-
-    hogl_ubo_new(&prefilterUBO, desc);
-}
-
-void normalize(vec3* p) {
-    float w = sqrt(p->x * p->x + p->y * p->y + p->z * p->z);
-    p->x /= w;
-    p->y /= w;
-    p->z /= w;
-}
-
-vec3 cross(vec3 l, vec3 r) {
-    vec3 ret = { 0 };
-    ret.x = l.y * r.z - l.z * r.y;
-    ret.y = l.z * r.x - l.x * r.z;
-    ret.z = l.x * r.y - l.y * r.x;
-    return ret;
-}
-
-float dot(vec3 l, vec3 r)
-{
-    return l.x * r.x + l.y * r.y + l.z * r.z;
-}
-
-void translate(vec3 val, float* mret) {
-    mret[0 + 3 * 4] = val.x;
-    mret[1 + 3 * 4] = val.y;
-    mret[2 + 3 * 4] = val.z;
-}
-
-void mat_init(float* mret) {
-    memset(mret, 0, 16 * sizeof(float));
-
-    mret[0 + 0 * 4] = 1.0f;
-    mret[1 + 1 * 4] = 1.0f;
-    mret[2 + 2 * 4] = 1.0f;
-    mret[3 + 3 * 4] = 1.0f;
-}
-
 void load_audio(hogl_abuffer_desc* desc) {
     int error;
     wavfh header;
@@ -748,56 +693,51 @@ void load_audio(hogl_abuffer_desc* desc) {
 
 void prepare_pbr(void) {
     storage = new hogl::object_storage();
+    ubo_manager = new hogl::ubo_manager();
+    asset_manager = new hogl::asset_manager();
+    scene = new hogl::scene(ubo_manager->std_pkg());
     iron = storage->create_new<hogl::material>().relay();
 
-    float views[6][16];
+    glm::mat4 views[6];
     hogl_rstate rstate;
     float listenerOrientation[6];
     hogl_abuffer_desc adesc;
     adesc.data = NULL;
 
-    mat_init(&views[0][0]);
-    mat_init(&views[1][0]);
-    mat_init(&views[2][0]);
-    mat_init(&views[3][0]);
-    mat_init(&views[4][0]);
-    mat_init(&views[5][0]);
-
-    mat_init(&md.projection[0]);
-
     generate_basic_geometry();
-    setup_ubos();
+    create_ubos();
     load_shaders();
     load_textures();
     setup_fbos();
 
     // PROJECTION
-    hogl_smemcpy(&md.projection[0], glm::value_ptr(gen_camera.compute_projection()), 16 * sizeof(float));
+    hogl::relay_ptr<hogl::std_ubo_pkg> ubopkg = ubo_manager->std_pkg();
+    ubopkg->per_pass->data.projection = gen_camera.compute_projection();
 
     // View
     gen_camera.reposition({ 0.0f, 0.0f, 0.0f });
 
     gen_camera.look_at({ 1.0f, 0.0f, 0.0f });
     gen_camera.up({ 0.0f, -1.0f, 0.0f });
-    hogl_smemcpy(&views[0][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[0] = gen_camera.compute_view();
 
     gen_camera.look_at({ -1.0f, 0.0f, 0.0f });
-    hogl_smemcpy(&views[1][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[1] = gen_camera.compute_view();
     
     gen_camera.look_at({ 0.0f, 1.0f, 0.0f });
     gen_camera.up({ 0.0f, 0.0f, 1.0f });
-    hogl_smemcpy(&views[2][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[2] = gen_camera.compute_view();
 
     gen_camera.look_at({ 0.0f, -1.0f, 0.0f });
     gen_camera.up({ 0.0f, 0.0f, -1.0f });
-    hogl_smemcpy(&views[3][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[3] = gen_camera.compute_view();
 
     gen_camera.look_at({ 0.0f, 0.0f, 1.0f });
     gen_camera.up({ 0.0f, -1.0f, 0.0f });
-    hogl_smemcpy(&views[4][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[4] = gen_camera.compute_view();
 
     gen_camera.look_at({ 0.0f, 0.0f, -1.0f });
-    hogl_smemcpy(&views[5][0], glm::value_ptr(gen_camera.compute_view()), 16 * sizeof(float));
+    views[5] = gen_camera.compute_view();
 
     fbo->bind();
     hogl_renderbuffer_bind(rbo);
@@ -811,8 +751,8 @@ void prepare_pbr(void) {
     cubeMesh->bind();
 
     for (int i = 0; i < 6; i++) {
-        memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
-        hogl_ubo_data(matricesUBO, &md, sizeof(md));
+        ubopkg->per_pass->data.view = views[i];
+        ubopkg->per_pass->update();
 
         envCubemap->set_side((hogl_cm_side)i);
         fbo->ca(envCubemap.relay_as<hogl::texture>(), 0, 0);
@@ -831,8 +771,8 @@ void prepare_pbr(void) {
     envCubemap->bind(0);
 
     for (int i = 0; i < 6; i++) {
-        memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
-        hogl_ubo_data(matricesUBO, &md, sizeof(md));
+        ubopkg->per_pass->data.view = views[i];
+        ubopkg->per_pass->update();
 
         irradianceMap->set_side((hogl_cm_side)i);
         fbo->ca(irradianceMap.relay_as<hogl::texture>(), 0, 0);
@@ -854,12 +794,12 @@ void prepare_pbr(void) {
         hogl_renderbuffer_resize(rbo, mipWidth, mipHeight);
 
         float roughness = (float)mip / (float)(maxMipLevels - 1);
-        pfd.roughness = roughness;
-        hogl_ubo_data(prefilterUBO, &pfd, sizeof(prefilter_data));
+        prefilterUBO->data.roughness = roughness;
+        prefilterUBO->update();
 
         for (unsigned int i = 0; i < 6; ++i) {
-            memcpy(&md.view[0], &views[i][0], 16 * sizeof(float));
-            hogl_ubo_data(matricesUBO, &md, sizeof(md));
+            ubopkg->per_pass->data.view = views[i];
+            ubopkg->per_pass->update();
 
             prefilterMap->set_side((hogl_cm_side)i);
             fbo->ca(prefilterMap.relay_as<hogl::texture>(), 0, mip);
@@ -883,7 +823,7 @@ void prepare_pbr(void) {
     hogl_render_clear(0, 0, 0, 0);
     quadMesh->render();
 
-    hogl_smemcpy(&md.projection[0], glm::value_ptr(scene_camera.compute_projection()), 16 * sizeof(float));
+    ubopkg->per_pass->data.projection = scene_camera.compute_projection();
 
     hogl_reset_framebuffer();
     hogl_viewport(1280, 720);
@@ -917,9 +857,9 @@ void prepare_pbr(void) {
     scene_camera.look_at({ 0.0f, 0.0f, -2.0f });
     scene_camera.up({ 0.0f, 1.0f, 0.0f });
 
-    scene.set_camera(scene_camera);
+    scene->set_camera(scene_camera);
 
-    hogl::entity entity = scene.spawn_entity();
+    hogl::entity entity = scene->spawn_entity();
     auto& transform = entity.get_component<hogl::transform_component>();
     transform.position.z = 2.0f;
 
@@ -928,81 +868,49 @@ void prepare_pbr(void) {
 }
 
 void render_pbr(void) {
-    float identity[16];
-    float model[16];
-    float view[16];
+    glm::mat4 identity(1.0f);
+    glm::mat4 model(1.0f);
 
-    mat_init(&identity[0]);
-    mat_init(&model[0]);
-    mat_init(&view[0]);
+    pbrUBO->data.lightPosition[0][0] = -10.0f;
+    pbrUBO->data.lightColor[0][0] = 300.0f;
+    pbrUBO->data.lightPosition[0][1] = 10.0f;
+    pbrUBO->data.lightColor[0][1] = 300.0f;
+    pbrUBO->data.lightPosition[0][2] = 10.0f;
+    pbrUBO->data.lightColor[0][2] = 300.0f;
 
-    vec3 eye = { 0 };
-    vec3 target = { 0 };
-    vec3 up = { 0 };
+    pbrUBO->data.lightPosition[1][0] = 10.0f;
+    pbrUBO->data.lightColor[1][0] = 300.0f;
+    pbrUBO->data.lightPosition[1][1] = 10.0f;
+    pbrUBO->data.lightColor[1][1] = 300.0f;
+    pbrUBO->data.lightPosition[1][2] = 10.0f;
+    pbrUBO->data.lightColor[1][2] = 300.0f;
 
-    vec3 translateVec = { 0 };
+    pbrUBO->data.lightPosition[2][0] = -10.0f;
+    pbrUBO->data.lightColor[2][0] = 300.0f;
+    pbrUBO->data.lightPosition[2][1] = -10.0f;
+    pbrUBO->data.lightColor[2][1] = 300.0f;
+    pbrUBO->data.lightPosition[2][2] = 10.0f;
+    pbrUBO->data.lightColor[2][2] = 300.0f;
 
-    pbrd.lightPosition[0][0] = -10.0f;
-    pbrd.lightColor[0][0] = 300.0f;
-    pbrd.lightPosition[0][1] = 10.0f;
-    pbrd.lightColor[0][1] = 300.0f;
-    pbrd.lightPosition[0][2] = 10.0f;
-    pbrd.lightColor[0][2] = 300.0f;
-
-    pbrd.lightPosition[1][0] = 10.0f;
-    pbrd.lightColor[1][0] = 300.0f;
-    pbrd.lightPosition[1][1] = 10.0f;
-    pbrd.lightColor[1][1] = 300.0f;
-    pbrd.lightPosition[1][2] = 10.0f;
-    pbrd.lightColor[1][2] = 300.0f;
-
-    pbrd.lightPosition[2][0] = -10.0f;
-    pbrd.lightColor[2][0] = 300.0f;
-    pbrd.lightPosition[2][1] = -10.0f;
-    pbrd.lightColor[2][1] = 300.0f;
-    pbrd.lightPosition[2][2] = 10.0f;
-    pbrd.lightColor[2][2] = 300.0f;
-
-    pbrd.lightPosition[3][0] = 10.0f;
-    pbrd.lightColor[3][0] = 300.0f;
-    pbrd.lightPosition[3][1] = -10.0f;
-    pbrd.lightColor[3][1] = 300.0f;
-    pbrd.lightPosition[3][2] = 10.0f;
-    pbrd.lightColor[3][2] = 300.0f;
+    pbrUBO->data.lightPosition[3][0] = 10.0f;
+    pbrUBO->data.lightColor[3][0] = 300.0f;
+    pbrUBO->data.lightPosition[3][1] = -10.0f;
+    pbrUBO->data.lightColor[3][1] = 300.0f;
+    pbrUBO->data.lightPosition[3][2] = 10.0f;
+    pbrUBO->data.lightColor[3][2] = 300.0f;
 
     hogl_render_clear(0.2f * 255, 0.3f * 255, 0.3f * 255, 1.0f * 255);
 
-    hogl_smemcpy(&view[0], glm::value_ptr(scene_camera.compute_view()), 16 * sizeof(float));
+    pbrUBO->data.model = model;
+    pbrUBO->data.camPos[0] = 0.0f;
+    pbrUBO->data.camPos[1] = 0.0f;
+    pbrUBO->data.camPos[2] = 15.0f;
 
-    memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
+    pbrUBO->update();
 
-    pbrd.camPos[0] = 0.0f;
-    pbrd.camPos[1] = 0.0f;
-    pbrd.camPos[2] = 15.0f;
-
-    memcpy(&md.view[0], &view[0], 16 * sizeof(float));
-
-    hogl_ubo_data(pbrDataUBO, &pbrd, sizeof(pbr_data));
-    hogl_ubo_data(matricesUBO, &md, sizeof(matrices_data));
-
-    // Rusted iron
-    translateVec.x = 0.0f;
-    translateVec.y = 0.0f;
-    translateVec.z = 2.0f;
-
-    translate(translateVec, &model[0]);
-
-    memcpy(&pbrd.model[0], &model[0], 16 * sizeof(float));
-    hogl_ubo_data(pbrDataUBO, &pbrd, sizeof(pbr_data));
-
-    scene.render();
-
-    memcpy(&model[0], &identity[0], 16 * sizeof(float));
+    scene->render();
 
     // Skybox
-    memcpy(&md.view[0], &view[0], sizeof(float) * 16);
-    hogl_ubo_data(matricesUBO, &md, sizeof(matrices_data));
-
     cubeMesh->bind();
     hogl_shader_bind(backgroundShader);
     envCubemap->bind(0);
@@ -1014,10 +922,6 @@ void render_pbr(void) {
 }
 
 void pbr_free(void) {
-    hogl_ubo_free(pbrDataUBO);
-    hogl_ubo_free(matricesUBO);
-    hogl_ubo_free(prefilterUBO);
-
     hogl_shader_free(equirectangularToCubemapShader);
     hogl_shader_free(irradianceShader);
     hogl_shader_free(prefilterShader);
@@ -1031,5 +935,8 @@ void pbr_free(void) {
     hogl_source_free(audioSource);
     hogl_abuffer_free(audioBuffer);
 
+    delete scene;
     delete storage;
+    delete ubo_manager;
+    delete asset_manager;
 }

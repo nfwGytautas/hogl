@@ -15,8 +15,8 @@ namespace hogl {
 		hogl_shader_sampler_location(m_shader, name.c_str(), bp);
 	}
 
-	void shader::ubo_location(const std::string& name, int bp) {
-		hogl_shader_ubo_binding(m_shader, name.c_str(), bp);
+	void shader::ubo_attach(relay_ptr<ubo> ubo) {
+		hogl_shader_ubo_binding(m_shader, ubo->m_glslName.c_str(), ubo->m_bp);
 	}
 
 	void shader::bind() {

@@ -16,14 +16,14 @@ namespace hogl {
 		 * @param object The pointer to be stored
 		 */
 		relay_ptr(T* aptr)
-			: ptr(aptr)
+			: m_ptr(aptr)
 		{ }
 
 		/**
 		 * Empty constructor
 		 */
 		relay_ptr()
-			: ptr(nullptr)
+			: m_ptr(nullptr)
 		{ }
 
 		/**
@@ -33,7 +33,7 @@ namespace hogl {
 		 */
 		relay_ptr(const relay_ptr<T>& relay)
 		{
-			ptr = relay.ptr;
+			m_ptr = relay.m_ptr;
 		}
 
 #ifdef _MEMORY_
@@ -43,7 +43,7 @@ namespace hogl {
 		 * @param aptr std::unique_ptr with T value
 		 */
 		relay_ptr(std::unique_ptr<T>& aptr)
-			: ptr(aptr.get())
+			: m_ptr(aptr.get())
 		{ }
 
 		/**
@@ -52,7 +52,7 @@ namespace hogl {
 		 * @param aptr std::shared_ptr with T value
 		 */
 		relay_ptr(std::shared_ptr<T>& aptr)
-			: ptr(aptr.get())
+			: m_ptr(aptr.get())
 		{ }
 #endif
 
@@ -68,7 +68,7 @@ namespace hogl {
 		 * @return This, but with new values
 		 */
 		relay_ptr<T>& operator=(const relay_ptr<T>& rhs) {
-			ptr = rhs.ptr;
+			m_ptr = rhs.m_ptr;
 			return *this;
 		}
 
@@ -79,7 +79,7 @@ namespace hogl {
 		 * @return This, but with new values
 		 */
 		relay_ptr<T>& operator=(T* rhs) {
-			ptr = rhs;
+			m_ptr = rhs;
 			return *this;
 		}
 
@@ -91,7 +91,7 @@ namespace hogl {
 		 * @return True if both relays point to the same memory
 		 */
 		bool operator==(const relay_ptr<T>& other) const {
-			return ptr == other.ptr;
+			return m_ptr == other.m_ptr;
 		}
 
 		/**
@@ -100,7 +100,7 @@ namespace hogl {
 		 * @return True if the pointer is not pointing to nullptr
 		 */
 		bool valid() const {
-			return ptr != nullptr;
+			return m_ptr != nullptr;
 		}
 
 		/**
@@ -109,10 +109,22 @@ namespace hogl {
 		 * @return Underlying object const pointer
 		 */
 		T* operator->() const {
-			return ptr;
+			return m_ptr;
+		}
+
+		/**
+		 * Creates a relay_ptr of specified type from current relay_ptr
+		 * used in polymorphic types
+		 *
+		 * @tparam AsType The type of the new reference
+		 * @return relay_ptr with the specified AsType type
+		 */
+		template <typename AsType>
+		relay_ptr<AsType> as() {
+			return relay_ptr<AsType>(dynamic_cast<AsType*>(m_ptr));
 		}
 	private:
-		T* ptr;
+		T* m_ptr;
 	};
 
 	/**

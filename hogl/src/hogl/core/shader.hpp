@@ -4,6 +4,7 @@
 #include "hogl/shared/hogl_def.hpp"
 #include "hogl/shared/pointer.hpp"
 #include "hogl/core/object.hpp"
+#include "hogl/core/ubo.hpp"
 
 #include "hogl_core/graphics/hogl_gl_primitive.h"
 
@@ -26,11 +27,10 @@ namespace hogl {
 		void sampler_location(const std::string& name, int bp);
 
 		/**
-		 * @brief Sets the ubo location of the shader
-		 * @param name Name of the ubo variable
-		 * @param bp Bind point for the ubo
+		 * @brief Attaches the specified ubo to this shader
+		 * @param ubo UBO to attach
 		*/
-		void ubo_location(const std::string& name, int bp);
+		void ubo_attach(relay_ptr<ubo> ubo);
 
 		/**
 		 * @brief Binds the shader

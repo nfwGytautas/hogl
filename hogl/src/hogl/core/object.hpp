@@ -18,6 +18,7 @@ namespace hogl {
 	 * Cubemap		5
 	 * Framebuffer	6
 	 * Renderbuffer	7
+	 * UBO			8
 	 */
 
 	/**
