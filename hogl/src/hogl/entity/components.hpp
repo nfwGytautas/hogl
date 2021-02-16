@@ -43,4 +43,16 @@ namespace hogl {
 			: material(amaterial) {}
 		renderer_component(const renderer_component& other) : material(other.material) {};
 	};
+
+	/**
+	 * @brief Component holding light information
+	*/
+	struct HOGL_CPP_API light_component {
+		glm::vec3 color;
+
+		light_component() = default;
+		light_component(glm::vec3 color)
+			: color(color) {}
+		light_component(const light_component& other) : color(other.color) {};
+	};
 }

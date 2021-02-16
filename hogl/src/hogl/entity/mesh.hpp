@@ -41,6 +41,12 @@ namespace hogl {
 		 * TODO: Maybe move to dedicated renderer
 		*/
 		void render();
+
+		/**
+		 * @brief Renders the mesh count number of times
+		 * TODO: Maybe move to dedicated renderer
+		*/
+		void render_instanced(size_t count);
 	private:
 		hogl_render_mode m_rmode = HOGL_RM_TRIANGLES;
 		std::vector<ref<gpu_buffer>> m_buffers = {};

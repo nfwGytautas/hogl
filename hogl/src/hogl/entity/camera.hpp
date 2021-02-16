@@ -65,6 +65,11 @@ namespace hogl {
 		 * @brief Sets the camera's up direction
 		*/
 		void up(glm::vec3 value);
+
+		/**
+		 * @brief Returns the camera position
+		*/
+		glm::vec3 get_position() const;
 	private:
 		float m_fov = 45.0f;
 		float m_aspect = 1.778f;

@@ -52,4 +52,8 @@ namespace hogl {
 		m_up = value;
 	}
 
+	glm::vec3 camera::get_position() const {
+		return m_position;
+	}
+
 }

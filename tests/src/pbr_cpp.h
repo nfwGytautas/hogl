@@ -1,5 +1,6 @@
 #include "hogl/engine/object_storage.hpp"
 #include "hogl/engine/ubo_manager.hpp"
+#include "hogl/engine/instance_data.hpp"
 #include "hogl/io/asset_manager.hpp"
 #include "hogl/core/framebuffer.hpp"
 #include "hogl/core/ubo.hpp"
@@ -22,25 +23,6 @@ public:
 
     prefilter_ubo()
         : ubo("prefilter", 4, sizeof(data))
-    {
-        p_iBuff = &data;
-    }
-};
-
-class pbr_ubo : public hogl::ubo {
-public:
-    struct data {
-        glm::mat4 model;
-
-        // UBO requires alignment multiple of 16
-        float lightPosition[4][4];
-        float lightColor[4][4];
-
-        float camPos[4];
-    } data;
-
-    pbr_ubo()
-        : ubo("pbr_data", 5, sizeof(data))
     {
         p_iBuff = &data;
     }
@@ -70,13 +52,13 @@ const float PI = 3.14159265359;
 hogl::object_storage* storage = nullptr;
 hogl::ubo_manager* ubo_manager = nullptr;
 hogl::asset_manager* asset_manager = nullptr;
+hogl::instance_data* instance_data = nullptr;
 
 hogl::camera scene_camera(45.0f, 0.1f, 100.0f, 1280.0f, 720.0f);
 hogl::camera gen_camera(90.0f, 0.1f, 10.0f, 1.0f, 1.0f);
 
 hogl::scene* scene = nullptr;
 
-hogl::relay_ptr<pbr_ubo> pbrUBO;
 hogl::relay_ptr<prefilter_ubo> prefilterUBO;
 
 hogl::relay_ptr<hogl::mesh> cubeMesh;
@@ -368,7 +350,6 @@ void generate_basic_geometry(void) {
 
 void create_ubos(void) {
     prefilterUBO = storage->create_new<prefilter_ubo>().relay();
-    pbrUBO = storage->create_new<pbr_ubo>().relay();
 }
 
 void load_shaders(void) {
@@ -391,7 +372,6 @@ void load_shaders(void) {
     pbrShader->sampler_location("metallicMap", 5);
     pbrShader->sampler_location("roughnessMap", 6);
     pbrShader->sampler_location("aoMap", 7);
-    pbrShader->ubo_attach(pbrUBO.as<hogl::ubo>());
 
     ubo_manager->std_pkg()->attach_to(pbrShader.relay());
 
@@ -695,7 +675,9 @@ void prepare_pbr(void) {
     storage = new hogl::object_storage();
     ubo_manager = new hogl::ubo_manager();
     asset_manager = new hogl::asset_manager();
-    scene = new hogl::scene(ubo_manager->std_pkg());
+    instance_data = new hogl::instance_data();
+
+    scene = new hogl::scene(ubo_manager->std_pkg(), instance_data);
     iron = storage->create_new<hogl::material>().relay();
 
     glm::mat4 views[6];
@@ -865,48 +847,32 @@ void prepare_pbr(void) {
 
     entity.add_component<hogl::mesh_component>(sphereMesh);
     entity.add_component<hogl::renderer_component>(iron);
+
+    for (int i = 0; i < 4; i++) {
+        hogl::entity light = scene->spawn_entity();
+        auto& transform = light.get_component<hogl::transform_component>();
+        auto& lightc = light.add_component<hogl::light_component>();
+        lightc.color = glm::vec3(300.0f, 300.0f, 300.0f);
+
+        switch (i) {
+        case 0:
+            transform.position = glm::vec3(-10.0f, 10.0f, 10.0f);
+            break;
+        case 1:
+            transform.position = glm::vec3(10.0f, 10.0f, 10.0f);
+            break;
+        case 2:
+            transform.position = glm::vec3(-10.0f, -10.0f, 10.0f);
+            break;
+        case 3:
+            transform.position = glm::vec3(10.0f, -10.0f, 10.0f);
+            break;
+        }
+    }
 }
 
 void render_pbr(void) {
-    glm::mat4 identity(1.0f);
-    glm::mat4 model(1.0f);
-
-    pbrUBO->data.lightPosition[0][0] = -10.0f;
-    pbrUBO->data.lightColor[0][0] = 300.0f;
-    pbrUBO->data.lightPosition[0][1] = 10.0f;
-    pbrUBO->data.lightColor[0][1] = 300.0f;
-    pbrUBO->data.lightPosition[0][2] = 10.0f;
-    pbrUBO->data.lightColor[0][2] = 300.0f;
-
-    pbrUBO->data.lightPosition[1][0] = 10.0f;
-    pbrUBO->data.lightColor[1][0] = 300.0f;
-    pbrUBO->data.lightPosition[1][1] = 10.0f;
-    pbrUBO->data.lightColor[1][1] = 300.0f;
-    pbrUBO->data.lightPosition[1][2] = 10.0f;
-    pbrUBO->data.lightColor[1][2] = 300.0f;
-
-    pbrUBO->data.lightPosition[2][0] = -10.0f;
-    pbrUBO->data.lightColor[2][0] = 300.0f;
-    pbrUBO->data.lightPosition[2][1] = -10.0f;
-    pbrUBO->data.lightColor[2][1] = 300.0f;
-    pbrUBO->data.lightPosition[2][2] = 10.0f;
-    pbrUBO->data.lightColor[2][2] = 300.0f;
-
-    pbrUBO->data.lightPosition[3][0] = 10.0f;
-    pbrUBO->data.lightColor[3][0] = 300.0f;
-    pbrUBO->data.lightPosition[3][1] = -10.0f;
-    pbrUBO->data.lightColor[3][1] = 300.0f;
-    pbrUBO->data.lightPosition[3][2] = 10.0f;
-    pbrUBO->data.lightColor[3][2] = 300.0f;
-
     hogl_render_clear(0.2f * 255, 0.3f * 255, 0.3f * 255, 1.0f * 255);
-
-    pbrUBO->data.model = model;
-    pbrUBO->data.camPos[0] = 0.0f;
-    pbrUBO->data.camPos[1] = 0.0f;
-    pbrUBO->data.camPos[2] = 15.0f;
-
-    pbrUBO->update();
 
     scene->render();
 
@@ -939,4 +905,5 @@ void pbr_free(void) {
     delete storage;
     delete ubo_manager;
     delete asset_manager;
+    delete instance_data;
 }

@@ -2,6 +2,7 @@
 
 #include <entt/entt.hpp>
 #include "hogl/shared/hogl_def.hpp"
+#include "hogl/engine/instance_data.hpp"
 #include "hogl/core/object.hpp"
 #include "hogl/entity/entity.hpp"
 #include "hogl/entity/camera.hpp"
@@ -17,7 +18,7 @@ namespace hogl {
 	*/
 	class HOGL_CPP_API scene {
 	public:
-		scene(relay_ptr<std_ubo_pkg> ubos);
+		scene(relay_ptr<std_ubo_pkg> ubos, relay_ptr<instance_data> idata);
 
 		/**
 		 * @brief Sets the scene active camera to the specified (copy is made)
@@ -38,6 +39,7 @@ namespace hogl {
 		entity spawn_entity();
 	private:
 		relay_ptr<std_ubo_pkg> m_ubos;
+		relay_ptr<instance_data> m_idata;
 		entt::registry m_sreg;
 		camera m_camera;
 

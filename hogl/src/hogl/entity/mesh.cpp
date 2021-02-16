@@ -42,4 +42,13 @@ namespace hogl {
 		}
 	}
 
+	void mesh::render_instanced(size_t count) {
+		if (m_ecount > 0) {
+			hogl_render_ei(m_rmode, m_ecount, count);
+		}
+		else {
+			hogl_render_ai(m_rmode, m_vcount, count);
+		}
+	}
+
 }

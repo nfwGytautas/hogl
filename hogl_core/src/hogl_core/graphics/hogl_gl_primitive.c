@@ -74,6 +74,10 @@ unsigned int __get_type(hogl_element_type type) {
 }
 
 void __write_buffer_data(unsigned int target, size_t offset, void* data, size_t size) {
+	if (size == 0) {
+		return;
+	}
+
 	void* dst = glMapBuffer(target, GL_WRITE_ONLY);
 	hogl_gl_check();
 	hogl_smemcpy((char*)dst + offset, data, size);

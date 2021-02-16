@@ -23,8 +23,8 @@ namespace hogl {
 		 * @param offset Offset of the new buffer
 		*/
 		template<typename T>
-		void set_data(const std::vector<T>& data, size_t offset = 0) {
-			set_data_generic(data.data(), data.size() * sizeof(T), offset);
+		void set_data(std::vector<T>& data, size_t offset = 0) {
+			set_data_generic(static_cast<void*>(data.data()), data.size() * sizeof(T), offset);
 		}
 
 		/**
