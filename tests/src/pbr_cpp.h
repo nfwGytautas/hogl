@@ -12,9 +12,6 @@
 
 #include <math.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
 class prefilter_ubo : public hogl::ubo {
 public:
     struct data {
@@ -543,9 +540,9 @@ void load_textures(void) {
     //load_image(&wallRoughnessMap, "res/pbr/wall/roughness.png");
     //load_image(&wallAOMap, "res/pbr/wall/ao.png");
 
-    load_hdr(&hdr, "res/hdr/newport_loft.hdr");
+    //load_hdr(&hdr, "res/hdr/newport_loft.hdr");
     //load_hdr(&hdr, "res/hdr/dikhololo_night_4k.hdr");
-    //load_hdr(&hdr, "res/hdr/herkulessaulen_4k.hdr");
+    load_hdr(&hdr, "res/hdr/herkulessaulen_4k.hdr");
 
     desc.min_filter = HOGL_FT_LINEAR_MIPMAP_LINEAR;
     desc.mag_filter = HOGL_FT_LINEAR;

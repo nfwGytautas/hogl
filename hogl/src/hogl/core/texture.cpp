@@ -28,7 +28,6 @@ namespace hogl {
 	}
 
 	cubemap::~cubemap() {
-		hogl_texture_free(m_texture);
 	}
 
 	void cubemap::set_side(hogl_cm_side side) {

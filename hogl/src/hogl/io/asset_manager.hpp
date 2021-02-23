@@ -17,6 +17,7 @@ namespace hogl {
 		 * @return Contents of the file
 		*/
 		std::string load_txt(const std::string& path);
+
 	private:
 
 	};

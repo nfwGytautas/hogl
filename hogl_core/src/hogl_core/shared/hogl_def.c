@@ -10,11 +10,12 @@
 
 int __hogl_gl_check(void) {
 #ifndef HOGL_DISABLE_GL_WARNING
-	GLenum err;
+	GLenum err = glGetError();
 	int err_count = 0;
-	while ((err = glGetError()) != GL_NO_ERROR) {
+	while (err != GL_NO_ERROR) {
 		hogl_log_error("OpenGL error detected %ld", err);
 		err_count++;
+		err = glGetError();
 	}
 
 	return err_count;

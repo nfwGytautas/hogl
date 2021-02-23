@@ -4,9 +4,13 @@
 #include <fstream>
 #include <sstream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include "hogl_core/hogl_core.h"
 #include "pbr_cpp.h"
 //#include "pbr.h"
+#include "pbr_class.h"
 #include "ui.h"
 #include "lib.h"
 
@@ -52,8 +56,9 @@ void pbr(void) {
 
 int main(int argc, char** argv) {
 	//ui();
-	lib();
-	pbr();
+	//lib();
+	//pbr();
+	class_pbr();
 
 	return 0;
 }
